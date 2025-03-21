@@ -1,8 +1,10 @@
+import { User } from 'src/users/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -18,8 +20,14 @@ export class Product {
   @Column()
   description: string;
 
+  @ManyToOne(() => User, (user) => user.products)
+  user: User
+
   @Column()
   status: string;
+
+  @Column()
+  price:string;
 
   @CreateDateColumn()
   create_at: Date;

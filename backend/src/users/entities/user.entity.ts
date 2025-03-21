@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Product } from 'src/products/entities/product.entity';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
 export class User {
@@ -17,12 +18,15 @@ export class User {
   @Column()
   password: string;
 
-  @Column()
+  @OneToMany(() => Product, (product) => product.user)
+  products: Product[]
+
+  @CreateDateColumn()
   create_at: Date;
 
-  @Column()
+  @UpdateDateColumn()
   update_at: Date;
 
-  @Column()
+  @DeleteDateColumn()
   delete_at: Date;
 }
