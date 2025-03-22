@@ -7,7 +7,7 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private userModel: Repository<User>) {}
+  constructor(@InjectRepository(User) private userModel: Repository<User>) { }
   async create(createUserDto: CreateUserDto): Promise<User> {
     const newUser = this.userModel.create(createUserDto);
     return await this.userModel.save(newUser);
@@ -19,11 +19,11 @@ export class UsersService {
 
   async findOneByEmail(email: string): Promise<User | null> {
     const foundUser = await this.userModel.findOne({ where: { email } });
-      return foundUser;
+    return foundUser;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOneById(id: string): Promise<User | null> {
+    return await this.userModel.findOne({ where: { id } })
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {

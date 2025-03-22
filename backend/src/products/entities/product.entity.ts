@@ -23,11 +23,11 @@ export class Product {
   @ManyToOne(() => User, (user) => user.products)
   user: User
 
-  @Column()
-  status: string;
+  @Column({ default: true })
+  status: boolean;
 
   @Column()
-  price:string;
+  price: number;
 
   @CreateDateColumn()
   create_at: Date;
