@@ -15,19 +15,25 @@ export class Product {
   id: number;
 
   @Column()
-  title: string;
+  name: string;
+
+  @Column()
+  subtitle: string;
 
   @Column()
   description: string;
 
   @ManyToOne(() => User, (user) => user.products)
-  user: User
+  user: User;
 
-  @Column({ default: true })
-  status: boolean;
+  @Column({ default: 1 })
+  stock: number;
+
+  @Column({type: 'decimal'})
+  price: number;
 
   @Column()
-  price: number;
+  image: string;
 
   @CreateDateColumn()
   create_at: Date;

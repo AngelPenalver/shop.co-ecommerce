@@ -9,52 +9,80 @@ import { ProductResponseDto } from './dto/response-product.dto';
 
 @Injectable()
 export class ProductsService {
-  constructor(@InjectRepository(Product) private readonly productServices: Repository<Product>, private readonly usersService: UsersService) { }
+  constructor(
+    @InjectRepository(Product)
+    private readonly productServices: Repository<Product>,
+    private readonly usersService: UsersService
+  ) {}
 
-  async create({ title, description, price, userId }: CreateProductDto): Promise<ProductResponseDto> {
+  async create({
+    name,
+    subtitle,
+    description,
+    price,
+    userId,
+    image,
+    stock,
+  }: CreateProductDto): Promise<ProductResponseDto> {
     //we search for the user, if the user does not exist an error of not found is sent
-    const user = await this.usersService.findOneById(userId)
+    const user = await this.usersService.findOneById(userId);
 
-    if (!user) throw new NotFoundException('user not found')
+    if (!user) throw new NotFoundException('user not found');
 
     //if there is a user created, the product is created and subsequently saved in the database
-    const product = await this.productServices.create({ title, description, price, user })
+    const product = await this.productServices.create({
+      name,
+      subtitle,
+      description,
+      price,
+      user,
+      image,
+      stock,
+    });
+    await this.productServices.save(product);
 
-    await this.productServices.save(product)
-
-    return { message: 'Product successfully created', product: product }
+    return { message: 'Product successfully created', product: product };
   }
 
   async findAll(): Promise<Product[]> {
-    const products = await this.productServices.find()
-    return products
+    const products = await this.productServices.find();
+    return products;
   }
 
   async findOneById(id: number): Promise<Product> {
-    const product = await this.productServices.findOne({ where: { id } })
-    if (!product) throw new NotFoundException('Product not found')
-    return product
+    const product = await this.productServices.findOne({ where: { id } });
+    if (!product) throw new NotFoundException('Product not found');
+    return product;
   }
 
-  async update(id: number, updateProductDto: UpdateProductDto): Promise<string> {
+  async update(
+    id: number,
+    updateProductDto: UpdateProductDto
+  ): Promise<string> {
     //first we verify that the product exists, if it does not exist, a not found error is sent.
-    const product = await this.findOneById(id)
+    const product = await this.findOneById(id);
 
-    if (!product) throw new NotFoundException('Product not found')
+    if (!product) throw new NotFoundException('Product not found');
 
     //then if it exists, properties are destructured and the product is simply updated.
-    const { title, description, price } = updateProductDto
+    const { name, description, price, image, stock } = updateProductDto;
 
-    await this.productServices.update(id, { title, description, price })
+    await this.productServices.update(id, {
+      name,
+      description,
+      price,
+      image,
+      stock,
+    });
 
-    return 'Product successfully update'
+    return 'Product successfully update';
   }
 
   async remove(id: number): Promise<string> {
-    const product = await this.findOneById(id)
-    if(!product) throw new NotFoundException('Product not found')
-    
-    await this.productServices.softDelete(id)
+    const product = await this.findOneById(id);
+    if (!product) throw new NotFoundException('Product not found');
+
+    await this.productServices.softDelete(id);
     return `Product with the ${id}, has been successfully eliminated.`;
   }
 }
