@@ -3,7 +3,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
 import { ProductResponseDto } from './dto/response-product.dto';
 
@@ -84,5 +84,16 @@ export class ProductsService {
 
     await this.productServices.softDelete(id);
     return `Product with the ${id}, has been successfully eliminated.`;
+  }
+
+  async findOneByIdInTransaction(
+    transationEntityManager: EntityManager,
+    id: number
+  ): Promise<Product> {
+    const product = await transationEntityManager.findOneBy(Product, { id });
+    if (!product) {
+      throw new NotFoundException(`Product with id ${id} not found`);
+    }
+    return product;
   }
 }

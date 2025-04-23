@@ -14,7 +14,7 @@ export class Cart {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ type: 'decimal' })
   total: number;
 
   @OneToOne(() => User, (user) => user.cart)
