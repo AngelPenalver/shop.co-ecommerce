@@ -15,6 +15,28 @@ export class StripeService {
     this.stripe = new Stripe(secretKey, { apiVersion: '2025-03-31.basil' });
   }
 
+  async createCheckoutSession(orderId: string, amount: number) {
+    return this.stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Order #${orderId}`,
+            },
+            unit_amount: Math.round(amount * 100), // Convertir a centavos
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${this.configService.get('FRONTEND_URL')}/order/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${this.configService.get('FRONTEND_URL')}/order/canceled`,
+      metadata: { orderId },
+    });
+  }
+
   async createPaymentIntent(createStripeDto: CreateStripeDto) {
     const paymentIntent = await this.stripe.paymentIntents.create({
       amount: Math.round(createStripeDto.amount * 100),

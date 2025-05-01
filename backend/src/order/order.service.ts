@@ -35,13 +35,14 @@ export class OrderService {
     private readonly dataSource: DataSource,
     private readonly stripeService: StripeService,
     private readonly addressService: AddressService,
-    @InjectRepository(OrderAddress) private readonly orderAddressRepository: Repository<OrderAddress>
+    @InjectRepository(OrderAddress)
+    private readonly orderAddressRepository: Repository<OrderAddress>
   ) {}
 
   async createOrder(
     userId: string,
     createOrderDto: CreateOrderDto
-  ): Promise<{ Order: Order; clientSecret: string | null }> {
+  ): Promise<{ Order: Order; sessionId: string }> {
     // Obtener carrito del usuario
     const cart = await this.cartService.findOne(userId);
     if (!cart || !cart.items || cart.items.length === 0) {
@@ -130,11 +131,10 @@ export class OrderService {
       const taxAmount = this.calculateTaxes(calculatedSubtotal, createOrderDto); // Función de ejemplo
       const totalAmount = calculatedSubtotal + shippingCost + taxAmount; // Simplificado
 
-      const paymentIntent = await this.stripeService.createPaymentIntent({
-        amount: totalAmount,
-      });
-
-      paymentIntentClientSecret = paymentIntent.client_secret;
+      const session = await this.stripeService.createCheckoutSession(
+        'temp_order_id',
+        totalAmount
+      );
 
       // Crear la Entidad Order (DENTRO DE LA TRANSACCIÓN)
       const newOrder = queryRunner.manager.create(Order, {
@@ -148,7 +148,7 @@ export class OrderService {
         ), // Crear OrderItems aquí si usas cascada o guardas por separado
         paymentStatus: 'pending',
         paymentMethod: 'credit_card',
-        transactionId: paymentIntent.id,
+        transactionId: session.id,
         shippingAddress: orderShippingAddress,
       });
 
@@ -173,7 +173,7 @@ export class OrderService {
       }
       return {
         Order: orderWithRelations,
-        clientSecret: paymentIntentClientSecret,
+        sessionId: session.id,
       };
     } catch (error) {
       // Rollback en caso de error

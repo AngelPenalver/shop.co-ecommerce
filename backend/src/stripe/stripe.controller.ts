@@ -23,14 +23,13 @@ interface RawBodyRequest<T> extends Request {
 export class StripeWebhookController {
   private readonly logger = new Logger(StripeWebhookController.name);
   private readonly webhookSecret: string;
-  private readonly stripeClient: Stripe; // <--- 1. Declara la propiedad aquí
+  private readonly stripeClient: Stripe; 
 
   constructor(
     private readonly stripeService: StripeService,
     private readonly eventEmitter: EventEmitter2,
     private readonly configService: ConfigService
   ) {
-    // 2. Usa this.stripeClient para la asignación
     this.stripeClient = this.stripeService.getStripeClient();
 
     const webhookSecret = this.configService.get<string>(
@@ -58,10 +57,8 @@ export class StripeWebhookController {
     }
 
     let event: Stripe.Event;
-    // stripe; // <--- 3. Elimina esta línea
 
     try {
-      // 4. Asegúrate de usar this.stripeClient aquí
       event = this.stripeClient.webhooks.constructEvent(
         req.rawBody,
         signature,
@@ -81,13 +78,13 @@ export class StripeWebhookController {
         const paymentIntentSucceeded = event.data
           .object as Stripe.PaymentIntent;
         this.logger.log(
-          `PaymentIntent ${paymentIntentSucceeded.id} succeeded. Emitting event.` // Corregido log
+          `PaymentIntent ${paymentIntentSucceeded.id} succeeded. Emitting event.`
         );
         this.eventEmitter.emit('payment.succeeded', paymentIntentSucceeded);
         break;
       case 'payment_intent.payment_failed':
         const paymentIntentFailed = event.data.object as Stripe.PaymentIntent;
-        this.logger.warn(`PaymentIntent ${paymentIntentFailed.id} failed. Emitting event.`); // Corregido log
+        this.logger.warn(`PaymentIntent ${paymentIntentFailed.id} failed. Emitting event.`); 
         this.eventEmitter.emit('payment.failed', paymentIntentFailed);
         break;
       default:
