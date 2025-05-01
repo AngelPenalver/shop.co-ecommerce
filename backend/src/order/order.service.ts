@@ -58,11 +58,11 @@ export class OrderService {
     // Buscamos la direccion
     const selectedShippingAddress = await this.addressService.findOneById({
       userId,
-      id: createOrderDto.adddresId,
+      id: createOrderDto.addresId,
     });
     if (!selectedShippingAddress) {
       throw new NotFoundException(
-        `Address with id ${createOrderDto.adddresId} not found`
+        `Address with id ${createOrderDto.addresId} not found`
       );
     }
 
