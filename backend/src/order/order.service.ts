@@ -58,11 +58,11 @@ export class OrderService {
     // Buscamos la direccion
     const selectedShippingAddress = await this.addressService.findOneById({
       userId,
-      id: createOrderDto.addresId,
+      id: createOrderDto.addressId,
     });
     if (!selectedShippingAddress) {
       throw new NotFoundException(
-        `Address with id ${createOrderDto.addresId} not found`
+        `Address with id ${createOrderDto.addressId} not found`
       );
     }
 
@@ -135,6 +135,16 @@ export class OrderService {
         'temp_order_id',
         totalAmount
       );
+      // Extraer el ID del Payment Intent de forma segura
+      let paymentIntentId: string | null = null;
+      if (session.payment_intent) {
+        if (typeof session.payment_intent === 'string') {
+          paymentIntentId = session.payment_intent; // Ya es un string (ID)
+        } else {
+          // Es el objeto PaymentIntent expandido, obtenemos su ID
+          paymentIntentId = session.payment_intent.id;
+        }
+      }
 
       // Crear la Entidad Order (DENTRO DE LA TRANSACCIÓN)
       const newOrder = queryRunner.manager.create(Order, {
@@ -148,9 +158,13 @@ export class OrderService {
         ), // Crear OrderItems aquí si usas cascada o guardas por separado
         paymentStatus: 'pending',
         paymentMethod: 'credit_card',
-        transactionId: session.id,
+        transactionId: paymentIntentId,
         shippingAddress: orderShippingAddress,
       });
+
+      this.logger.log(
+        `Creating order with PaymentIntent ID: ${session.payment_intent}`
+      );
 
       // Guardar la Orden y sus Items
       const savedOrder = await queryRunner.manager.save(Order, newOrder);
@@ -213,7 +227,7 @@ export class OrderService {
       return;
     }
 
-    // IDEMPOTENCIA: Chequear si ya está completado
+    // Chequear si ya está completado
     if (order.paymentStatus === 'completed') {
       this.logger.log(`Order ${order.id} already completed. Ignoring event.`);
       return;
@@ -246,15 +260,15 @@ export class OrderService {
       this.logger.warn(
         `Order not found for failed PaymentIntent ID: ${paymentIntent.id}`
       );
-      return;
+      return null;
     }
 
-    // IDEMPOTENCIA: Chequear si ya está fallido/cancelado
+    // Chequear si ya está fallido/cancelado
     if (order.paymentStatus === 'failed' || order.orderStatus === 'cancelled') {
       this.logger.log(
         `Order ${order.id} already failed/cancelled. Ignoring event.`
       );
-      return;
+      return null;
     }
 
     order.paymentStatus = 'failed';
