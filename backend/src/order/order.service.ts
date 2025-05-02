@@ -215,11 +215,14 @@ export class OrderService {
   private readonly logger = new Logger(OrderService.name);
 
   @OnEvent('payment.succeeded')
-  async handlePaymentSucceededEvent(paymentIntent: Stripe.PaymentIntent) {
+  async handlePaymentSucceededEvent(
+    paymentIntent: Stripe.PaymentIntent,
+    userId: string
+  ) {
     this.logger.log(
       `Handling payment.succeeded event for PaymentIntent: ${paymentIntent.id}`
     );
-    const order = await this.findOneByPaymentIntentId(paymentIntent.id);
+    const order = await this.findOneByPaymentIntentId(paymentIntent.id, userId);
     if (!order) {
       this.logger.error(
         `Order not found for successful PaymentIntent ID: ${paymentIntent.id}`
@@ -249,13 +252,16 @@ export class OrderService {
     }
   }
 
-  // Listener para pago fallido
+  //Listener para pago fallido
   @OnEvent('payment.failed')
-  async handlePaymentFailedEvent(paymentIntent: Stripe.PaymentIntent) {
+  async handlePaymentFailedEvent(
+    paymentIntent: Stripe.PaymentIntent,
+    userId: string
+  ) {
     this.logger.log(
       `Handling payment.failed event for PaymentIntent: ${paymentIntent.id}`
     );
-    const order = await this.findOneByPaymentIntentId(paymentIntent.id);
+    const order = await this.findOneByPaymentIntentId(paymentIntent.id, userId);
     if (!order) {
       this.logger.warn(
         `Order not found for failed PaymentIntent ID: ${paymentIntent.id}`
@@ -286,16 +292,30 @@ export class OrderService {
     }
   }
 
-  async findOneByPaymentIntentId(paymentId: string) {
+  async findOneByPaymentIntentId(userId: string, paymentId: string) {
+    const user = await this.usersService.findOneById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    console.log(
+      `Searching for order with transactionId: ${paymentId} for userId: ${userId}`
+    );
+
     const order = await this.orderRepository.findOne({
-      where: { transactionId: paymentId },
-      relations: ['user', 'items', 'items.product'],
+      where: {
+        transactionId: paymentId,
+        user: { id: userId },
+      },
+      relations: ['user', 'items', 'items.product', 'shippingAddress'],
     });
+
     if (!order) {
       throw new NotFoundException(
-        `Order with transaction ID ${paymentId} not found`
+        `Order with transaction ID ${paymentId} not found for this user.`
       );
     }
+
     return order;
   }
 
@@ -307,6 +327,9 @@ export class OrderService {
     const orders = await this.orderRepository.find({
       where: { user: { id: userId } },
       relations: ['user', 'items', 'items.product'],
+      order: {
+        orderDate: 'DESC',
+      },
     });
     if (!orders || orders.length === 0) {
       throw new NotFoundException(`No orders found for user with id ${userId}`);
