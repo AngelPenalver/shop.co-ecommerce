@@ -18,7 +18,7 @@ export class OrderController {
     @Param('userId') userId: string,
     @Body('paymentId') paymentId: string
   ) {
-    return this.orderService.findOneByPaymentIntentId(userId, paymentId);
+    return this.orderService.findOneByPaymentIntentId(paymentId);
   }
   @Get(':userId')
   getAll(@Param('userId') userId: string) {
