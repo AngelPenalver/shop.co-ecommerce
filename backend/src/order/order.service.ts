@@ -172,12 +172,12 @@ export class OrderService {
         ),
         paymentStatus: 'pending',
         paymentMethod: 'credit_card',
-        transactionId: paymentIntentId,
+        transactionId: null,
         shippingAddress: orderShippingAddress,
       });
 
       this.logger.log(
-        `Extracted PaymentIntent ID for new order: ${paymentIntentId}`
+        `Extracted PaymentIntent ID for new order: ${newOrderId}`
       );
       // Guardar la Orden y sus Items
       const savedOrder = await queryRunner.manager.save(Order, newOrder);
@@ -227,111 +227,53 @@ export class OrderService {
 
   private readonly logger = new Logger(OrderService.name);
 
-  @OnEvent('payment.succeeded')
-  async handlePaymentSucceededEvent(paymentIntent: Stripe.PaymentIntent) {
-    this.logger.log(
-      `Handling payment.succeeded event for PaymentIntent: ${paymentIntent.id}`
-    );
-    const order = await this.findOneByPaymentIntentId(paymentIntent.id);
-    if (!order) {
-      this.logger.error(
-        `Order not found for successful PaymentIntent ID: ${paymentIntent.id}`
-      );
-      return;
-    }
-
-    // Chequear si ya está completado
-    if (order.paymentStatus === 'completed') {
-      this.logger.log(`Order ${order.id} already completed. Ignoring event.`);
-      return;
-    }
-
-    order.paymentStatus = 'completed';
-    order.orderStatus = 'processing';
-
-    try {
-      await this.orderRepository.save(order);
-      this.logger.log(
-        `Order ${order.id} updated to status ${order.orderStatus} / ${order.paymentStatus}.`
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to save updated order ${order.id} after payment success: ${error.message}`,
-        error.stack
-      );
-    }
-  }
-
-  //Listener para pago fallido
-  @OnEvent('payment.failed')
-  async handlePaymentFailedEvent(paymentIntent: Stripe.PaymentIntent) {
-    this.logger.log(
-      `Handling payment.failed event for PaymentIntent: ${paymentIntent.id}`
-    );
-    const order = await this.findOneByPaymentIntentId(paymentIntent.id);
-    if (!order) {
-      this.logger.warn(
-        `Order not found for failed PaymentIntent ID: ${paymentIntent.id}`
-      );
-      return null;
-    }
-
-    // Chequear si ya está fallido/cancelado
-    if (order.paymentStatus === 'failed' || order.orderStatus === 'cancelled') {
-      this.logger.log(
-        `Order ${order.id} already failed/cancelled. Ignoring event.`
-      );
-      return null;
-    }
-
-    order.paymentStatus = 'failed';
-    order.orderStatus = 'cancelled';
-    try {
-      await this.orderRepository.save(order);
-      this.logger.log(
-        `Order ${order.id} updated to status ${order.orderStatus} / ${order.paymentStatus}.`
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to save updated order ${order.id} after payment failure: ${error.message}`,
-        error.stack
-      );
-    }
-  }
   @OnEvent('checkout.session.completed')
   async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
     this.logger.log(
       `Handling checkout.session.completed for Session ID: ${session.id}`
     );
 
+    // --- 1. Extrae tu ID interno y el Payment Intent ID ---
     const internalOrderId = session.metadata?.internal_order_id;
     const paymentIntentId =
       typeof session.payment_intent === 'string'
         ? session.payment_intent
         : session.payment_intent?.id;
 
-    if (!internalOrderId || !paymentIntentId) {
+    if (!internalOrderId) {
       this.logger.error(
-        `Missing data in checkout.session.completed: ${JSON.stringify(session)}`
+        `Missing internal_order_id in metadata for checkout.session.completed: ${session.id}`
+      );
+      return;
+    }
+    if (!paymentIntentId) {
+      this.logger.error(
+        `Missing payment_intent ID in checkout.session.completed: ${session.id}`
       );
       return;
     }
 
-    // Busca por el ID interno que guardaste en metadata
+    // Busca la orden usando TU ID interno (UUID) ---
     const order = await this.orderRepository.findOne({
       where: { id: internalOrderId },
     });
 
     if (!order) {
-      this.logger.error(`Order with internal ID ${internalOrderId} not found.`);
-      return;
-    }
-    if (order.paymentStatus === 'completed') {
-      this.logger.log(`Order ${order.id} already completed.`);
+      this.logger.error(
+        `Order with internal ID ${internalOrderId} (from metadata) not found. Webhook might be processed before order creation completed or ID mismatch.`
+      );
       return;
     }
 
-    // Actualiza la orden
+    //  Verifica si ya fue procesada
+    if (order.paymentStatus === 'completed') {
+      this.logger.log(
+        `Order ${order.id} already marked as completed. Ignoring redundant checkout.session.completed event.`
+      );
+      return;
+    }
+
+    // Actualiza la orden con los datos del pago exitoso ---
     order.paymentStatus = 'completed';
     order.orderStatus = 'processing';
     order.transactionId = paymentIntentId;
@@ -339,12 +281,95 @@ export class OrderService {
     try {
       await this.orderRepository.save(order);
       this.logger.log(
-        `Order ${order.id} updated successfully via checkout.session.completed.`
+        `Order ${order.id} updated successfully via checkout.session.completed. Transaction ID: ${paymentIntentId}`
       );
-      // Lógica adicional: enviar email, etc.
     } catch (error) {
       this.logger.error(
-        `Failed to save updated order ${order.id}: ${error.message}`,
+        `Failed to save updated order ${order.id} after checkout.session.completed: ${error.message}`,
+        error.stack
+      );
+    }
+  }
+
+  @OnEvent('payment_intent.succeeded')
+  async handlePaymentSucceededEvent(paymentIntent: Stripe.PaymentIntent) {
+    this.logger.log(
+      `Handling payment.succeeded event for PaymentIntent: ${paymentIntent.id}`
+    );
+
+    // Intenta encontrar la orden por transactionId
+    const order = await this.findOneByPaymentIntentId(paymentIntent.id);
+
+    // Es normal que la orden no se encuentre si este evento llega antes que checkout.session.completed
+    if (!order) {
+      this.logger.warn(
+        `Order not found for successful PaymentIntent ID: ${paymentIntent.id}. Possibly checkout.session.completed hasn't updated it yet.`
+      );
+      return; // No hagas nada más si no la encuentras
+    }
+
+    // Si la encuentra, verifica si ya está completada (idempotencia)
+    if (order.paymentStatus === 'completed') {
+      this.logger.log(
+        `Order ${order.id} already completed. Ignoring redundant payment.succeeded event.`
+      );
+      return;
+    }
+
+    // Si por alguna razón checkout.session.completed falló pero este sí encuentra la orden
+    // (y no está completada), puedes actualizarla aquí como respaldo.
+    this.logger.log(
+      `Updating order ${order.id} status via payment.succeeded as a fallback.`
+    );
+    order.paymentStatus = 'completed';
+    order.orderStatus = 'processing';
+    // El transactionId ya debería coincidir si la encontró
+
+    try {
+      await this.orderRepository.save(order);
+      this.logger.log(
+        `Order ${order.id} updated via payment.succeeded fallback to status ${order.orderStatus} / ${order.paymentStatus}.`
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to save updated order ${order.id} via payment.succeeded fallback: ${error.message}`,
+        error.stack
+      );
+    }
+  }
+
+  @OnEvent('payment.failed')
+  async handlePaymentFailedEvent(paymentIntent: Stripe.PaymentIntent) {
+    this.logger.log(
+      `Handling payment.failed event for PaymentIntent: ${paymentIntent.id}`
+    );
+    const order = await this.findOneByPaymentIntentId(paymentIntent.id);
+    if (!order) {
+      // Si no la encuentra, puede ser que el checkout.session ni siquiera se completó
+      // o que el ID aún no se guardó. Es menos crítico que en el caso de éxito.
+      this.logger.warn(
+        `Order not found for failed PaymentIntent ID: ${paymentIntent.id}. Cannot mark as failed.`
+      );
+      return; // Cambiado de 'return null' a 'return'
+    }
+
+    if (order.paymentStatus === 'failed' || order.orderStatus === 'cancelled') {
+      this.logger.log(
+        `Order ${order.id} already failed/cancelled. Ignoring payment.failed event.`
+      );
+      return; // Cambiado de 'return null' a 'return'
+    }
+
+    order.paymentStatus = 'failed';
+    order.orderStatus = 'cancelled';
+    try {
+      await this.orderRepository.save(order);
+      this.logger.log(
+        `Order ${order.id} updated to status ${order.orderStatus} / ${order.paymentStatus} due to payment failure.`
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to save updated order ${order.id} after payment failure: ${error.message}`,
         error.stack
       );
     }
