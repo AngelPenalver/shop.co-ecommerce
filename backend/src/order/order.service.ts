@@ -172,7 +172,7 @@ export class OrderService {
         ),
         paymentStatus: 'pending',
         paymentMethod: 'credit_card',
-        transactionId: null,
+        transactionId: paymentIntentId,
         shippingAddress: orderShippingAddress,
       });
 
