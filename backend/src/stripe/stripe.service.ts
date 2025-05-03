@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { CreateStripeDto } from './dto/create-stripe.dto';
@@ -7,34 +7,49 @@ import { CreateStripeDto } from './dto/create-stripe.dto';
 export class StripeService {
   private readonly stripe: Stripe;
 
+  private readonly logger = new Logger(StripeService.name);
+
   constructor(private readonly configService: ConfigService) {
     const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (!secretKey) {
       throw new Error('Stripe Secret Key is not defined');
     }
-    this.stripe = new Stripe(secretKey, { apiVersion: '2025-03-31.basil' });
+    this.stripe = new Stripe(secretKey);
   }
 
-  async createCheckoutSession(orderId: string, amount: number) {
-    return this.stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
+  async createCheckoutSession(
+    orderId: string,
+    items: {
+      name: string;
+      unitPrice: number;
+      quantity: number;
+    }[]
+  ): Promise<Stripe.Checkout.Session> {
+    const frontendBaseUrl = this.configService.get<string>('FRONTEND_URL');
+    try {
+      const session = await this.stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: items.map((item) => ({
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `Order #${orderId}`,
+              name: item.name,
             },
-            unit_amount: Math.round(amount * 100), // Convertir a centavos
+            unit_amount: Math.round(item.unitPrice * 100),
           },
-          quantity: 1,
+          quantity: item.quantity,
+        })),
+        mode: 'payment',
+        success_url: `${frontendBaseUrl}/order/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${frontendBaseUrl}/order/cancel`,
+        metadata: {
+          internal_order_id: orderId,
         },
-      ],
-      mode: 'payment',
-      success_url: `${this.configService.get('FRONTEND_URL')}/orders/${orderId}`,
-      cancel_url: `${this.configService.get('FRONTEND_URL')}/orders`,
-      metadata: { orderId },
-    });
+      });
+      return session;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async createPaymentIntent(createStripeDto: CreateStripeDto) {

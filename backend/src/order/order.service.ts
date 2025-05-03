@@ -20,7 +20,7 @@ import { StripeService } from 'src/stripe/stripe.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import Stripe from 'stripe';
 import { AddressService } from 'src/address/address.service';
-import { first } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 import OrderAddress from 'src/order-address/entities/order-address.entity';
 
 @Injectable()
@@ -87,6 +87,11 @@ export class OrderService {
     try {
       let calculatedSubtotal = 0;
       const orderItemsData: Partial<OrderItem>[] = [];
+      const stripeLineItems: {
+        name: string;
+        unitPrice: number;
+        quantity: number;
+      }[] = [];
       const orderShippingAddress = queryRunner.manager.create(
         OrderAddress,
         shippingAddressData
@@ -119,6 +124,12 @@ export class OrderService {
           unitPrice: priceAtOrder, // Guardar el precio unitario al momento
         });
 
+        stripeLineItems.push({
+          name: product.name,
+          unitPrice: priceAtOrder,
+          quantity: cartItem.quantity,
+        });
+
         // Decrementar Stock
         const newStock = product.stock - cartItem.quantity;
         await queryRunner.manager.update(Product, product.id, {
@@ -131,9 +142,11 @@ export class OrderService {
       const taxAmount = this.calculateTaxes(calculatedSubtotal, createOrderDto); // Función de ejemplo
       const totalAmount = calculatedSubtotal + shippingCost + taxAmount; // Simplificado
 
+      const newOrderId = uuidv4();
+
       const session = await this.stripeService.createCheckoutSession(
-        'temp_order_id',
-        totalAmount
+        newOrderId,
+        stripeLineItems
       );
       // Extraer el ID del Payment Intent de forma segura
       let paymentIntentId: string | null = null;
@@ -146,26 +159,26 @@ export class OrderService {
         }
       }
 
-      // Crear la Entidad Order (DENTRO DE LA TRANSACCIÓN)
+      // Crear la Entidad Order
       const newOrder = queryRunner.manager.create(Order, {
+        id: newOrderId,
         user: user,
         orderDate: new Date(),
         totalAmount: totalAmount,
         subtotal: calculatedSubtotal,
-        orderStatus: 'pending', // O 'processing' si el pago es inmediato
+        orderStatus: 'pending',
         items: orderItemsData.map((itemData) =>
           queryRunner.manager.create(OrderItem, itemData)
-        ), // Crear OrderItems aquí si usas cascada o guardas por separado
+        ),
         paymentStatus: 'pending',
         paymentMethod: 'credit_card',
-        transactionId: paymentIntentId,
+        transactionId: null,
         shippingAddress: orderShippingAddress,
       });
 
       this.logger.log(
-        `Creating order with PaymentIntent ID: ${session.payment_intent}`
+        `Extracted PaymentIntent ID for new order: ${paymentIntentId}`
       );
-
       // Guardar la Orden y sus Items
       const savedOrder = await queryRunner.manager.save(Order, newOrder);
 
@@ -177,7 +190,7 @@ export class OrderService {
       //  Commit de la Transacción
       await queryRunner.commitTransaction();
 
-      //  Retornar la orden creada (podrías querer recargarla para obtener todas las relaciones bien)
+      //  Retornar la orden creada
       const orderWithRelations = await await this.orderRepository.findOne({
         where: { id: savedOrder.id },
         relations: ['user', 'items', 'items.product', 'shippingAddress'],
@@ -281,6 +294,57 @@ export class OrderService {
     } catch (error) {
       this.logger.error(
         `Failed to save updated order ${order.id} after payment failure: ${error.message}`,
+        error.stack
+      );
+    }
+  }
+  @OnEvent('checkout.session.completed')
+  async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+    this.logger.log(
+      `Handling checkout.session.completed for Session ID: ${session.id}`
+    );
+
+    const internalOrderId = session.metadata?.internal_order_id;
+    const paymentIntentId =
+      typeof session.payment_intent === 'string'
+        ? session.payment_intent
+        : session.payment_intent?.id;
+
+    if (!internalOrderId || !paymentIntentId) {
+      this.logger.error(
+        `Missing data in checkout.session.completed: ${JSON.stringify(session)}`
+      );
+      return;
+    }
+
+    // Busca por el ID interno que guardaste en metadata
+    const order = await this.orderRepository.findOne({
+      where: { id: internalOrderId },
+    });
+
+    if (!order) {
+      this.logger.error(`Order with internal ID ${internalOrderId} not found.`);
+      return;
+    }
+    if (order.paymentStatus === 'completed') {
+      this.logger.log(`Order ${order.id} already completed.`);
+      return;
+    }
+
+    // Actualiza la orden
+    order.paymentStatus = 'completed';
+    order.orderStatus = 'processing';
+    order.transactionId = paymentIntentId;
+
+    try {
+      await this.orderRepository.save(order);
+      this.logger.log(
+        `Order ${order.id} updated successfully via checkout.session.completed.`
+      );
+      // Lógica adicional: enviar email, etc.
+    } catch (error) {
+      this.logger.error(
+        `Failed to save updated order ${order.id}: ${error.message}`,
         error.stack
       );
     }
