@@ -2,9 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  Inject,
   Logger,
-  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -20,7 +18,6 @@ import { StripeService } from 'src/stripe/stripe.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import Stripe from 'stripe';
 import { AddressService } from 'src/address/address.service';
-import { v4 as uuidv4 } from 'uuid';
 import OrderAddress from 'src/order-address/entities/order-address.entity';
 
 @Injectable()
@@ -39,23 +36,21 @@ export class OrderService {
     private readonly orderAddressRepository: Repository<OrderAddress>
   ) {}
 
+  private readonly logger = new Logger(OrderService.name);
+
   async createOrder(
     userId: string,
     createOrderDto: CreateOrderDto
   ): Promise<{ Order: Order; sessionId: string }> {
-    // Obtener carrito del usuario
+    // 1. Validaciones Iniciales (Carrito, Usuario, Dirección)
     const cart = await this.cartService.findOne(userId);
     if (!cart || !cart.items || cart.items.length === 0) {
       throw new BadRequestException('Cannot create order from an empty cart.');
     }
-
-    // Obtener Entidad User
     const user = await this.usersService.findOneById(userId);
     if (!user) {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
-
-    // Buscamos la direccion
     const selectedShippingAddress = await this.addressService.findOneById({
       userId,
       id: createOrderDto.addressId,
@@ -66,6 +61,7 @@ export class OrderService {
       );
     }
 
+    // Prepara datos de dirección para la orden
     const shippingAddressData = {
       first_name: selectedShippingAddress.first_name,
       last_name: selectedShippingAddress.last_name,
@@ -77,14 +73,13 @@ export class OrderService {
       phone_number: selectedShippingAddress.phoneNumber,
     };
 
-    // Iniciar Transacción
+    // 2. Iniciar Transacción de Base de Datos
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    let paymentIntentClientSecret: string | null = null;
-
     try {
+      // 3. Procesar Items y Calcular Totales (Dentro de la Transacción)
       let calculatedSubtotal = 0;
       const orderItemsData: Partial<OrderItem>[] = [];
       const stripeLineItems: {
@@ -92,10 +87,7 @@ export class OrderService {
         unitPrice: number;
         quantity: number;
       }[] = [];
-      const orderShippingAddress = queryRunner.manager.create(
-        OrderAddress,
-        shippingAddressData
-      );
+      const productsToUpdateStock: { id: number; newStock: number }[] = [];
 
       for (const cartItem of cart.items) {
         const product = await this.productsService.findOneByIdInTransaction(
@@ -118,148 +110,162 @@ export class OrderService {
         const itemSubtotal = priceAtOrder * cartItem.quantity;
         calculatedSubtotal += itemSubtotal;
 
+        // Prepara datos para OrderItem
         orderItemsData.push({
-          product: product, // Asociar la entidad producto
+          product: product,
           quantity: cartItem.quantity,
-          unitPrice: priceAtOrder, // Guardar el precio unitario al momento
+          unitPrice: priceAtOrder,
         });
 
+        // Prepara datos para Stripe
         stripeLineItems.push({
           name: product.name,
           unitPrice: priceAtOrder,
           quantity: cartItem.quantity,
         });
 
-        // Decrementar Stock
-        const newStock = product.stock - cartItem.quantity;
-        await queryRunner.manager.update(Product, product.id, {
-          stock: newStock,
+        // Prepara actualización de stock
+        productsToUpdateStock.push({
+          id: product.id,
+          newStock: product.stock - cartItem.quantity,
         });
       }
 
-      // Calcular Totales Finales (envío, impuestos, etc.)
-      const shippingCost = this.calculateShipping(createOrderDto); // Función de ejemplo
-      const taxAmount = this.calculateTaxes(calculatedSubtotal, createOrderDto); // Función de ejemplo
-      const totalAmount = calculatedSubtotal + shippingCost + taxAmount; // Simplificado
+      const shippingCost = this.calculateShipping(createOrderDto);
+      const taxAmount = this.calculateTaxes(calculatedSubtotal, createOrderDto);
+      const totalAmount = calculatedSubtotal + shippingCost + taxAmount;
 
-      const newOrderId = uuidv4();
-
-      const session = await this.stripeService.createCheckoutSession(
-        'temp_order_id',
-        stripeLineItems
+      // 4. Crear y Guardar Entidad OrderAddress (Dentro de la Transacción)
+      const orderShippingAddress = queryRunner.manager.create(
+        OrderAddress,
+        shippingAddressData
       );
-      console.log(session);
-      // Extraer el ID del Payment Intent de forma segura
-      let paymentIntentId: string | null = null;
-      if (session.payment_intent) {
-        if (typeof session.payment_intent === 'string') {
-          paymentIntentId = session.payment_intent; // Ya es un string (ID)
-        } else {
-          // Es el objeto PaymentIntent expandido, obtenemos su ID
-          paymentIntentId = session.payment_intent.id;
-        }
-      }
 
-      // Crear la Entidad Order
-      console.log(paymentIntentId);
-      const newOrder = queryRunner.manager.create(Order, {
-        id: newOrderId,
+      // 5. Crear y Guardar Entidad Order PRELIMINAR (Dentro de la Transacción)
+      const preliminaryOrder = queryRunner.manager.create(Order, {
         user: user,
         orderDate: new Date(),
         totalAmount: totalAmount,
         subtotal: calculatedSubtotal,
         orderStatus: 'pending',
+        paymentStatus: 'pending',
+        paymentMethod: 'credit_card',
+        transactionId: null,
+        shippingAddress: orderShippingAddress,
         items: orderItemsData.map((itemData) =>
           queryRunner.manager.create(OrderItem, itemData)
         ),
-        paymentStatus: 'pending',
-        paymentMethod: 'credit_card',
-        transactionId: paymentIntentId,
-        shippingAddress: orderShippingAddress,
       });
 
+      this.logger.log(`Attempting to save preliminary order...`);
+      const savedOrder = await queryRunner.manager.save(
+        Order,
+        preliminaryOrder
+      ); // Guarda para obtener ID
+      const internalOrderId = savedOrder.id; // ¡Este es el ID interno (UUID)!
       this.logger.log(
-        `Extracted PaymentIntent ID for new order: ${newOrderId}`
+        `Preliminary order saved with internal ID: ${internalOrderId}`
       );
-      // Guardar la Orden y sus Items
-      const savedOrder = await queryRunner.manager.save(Order, newOrder);
 
+      // 6. Crear Sesión de Checkout de Stripe (Fuera de la Transacción DB, pero antes del commit)
+      this.logger.log(
+        `Creating Stripe Checkout Session for internal order ID: ${internalOrderId}`
+      );
+      const session = await this.stripeService.createCheckoutSession(
+        internalOrderId,
+        stripeLineItems
+      );
+      this.logger.log(`Stripe Session created: ${session.id}`);
+
+      // 7. Actualizar Stock (Dentro de la Transacción)
+      this.logger.log(
+        `Updating stock for ${productsToUpdateStock.length} products...`
+      );
+      for (const productUpdate of productsToUpdateStock) {
+        await queryRunner.manager.update(Product, productUpdate.id, {
+          stock: productUpdate.newStock,
+        });
+      }
+      this.logger.log('Stock updated.');
+
+      // 8. Limpiar Carrito (Dentro de la Transacción)
+      this.logger.log(`Removing items from cart ID: ${cart.id}`);
       await this.cartItem.removeAllItemsInTransaction(
         queryRunner.manager,
         cart.id
       );
+      this.logger.log('Cart items removed.');
 
-      //  Commit de la Transacción
+      // 9. Commit de la Transacción de Base de Datos
+      this.logger.log(
+        `Committing transaction for order ID: ${internalOrderId}`
+      );
       await queryRunner.commitTransaction();
+      this.logger.log(`Transaction committed successfully.`);
 
-      //  Retornar la orden creada
-      const orderWithRelations = await await this.orderRepository.findOne({
-        where: { id: savedOrder.id },
+      // 10. Retornar la orden (ya guardada) y el Session ID de Stripe
+      //     Recargar es opcional pero asegura que todas las relaciones estén cargadas
+      const orderWithRelations = await this.orderRepository.findOne({
+        where: { id: internalOrderId },
         relations: ['user', 'items', 'items.product', 'shippingAddress'],
       });
       if (!orderWithRelations) {
-        throw new NotFoundException(`Order with id ${savedOrder.id} not found`);
+        this.logger.error(
+          `Failed to reload order ${internalOrderId} after commit.`
+        );
+        throw new NotFoundException(
+          `Order with id ${internalOrderId} created but could not be reloaded.`
+        );
       }
+
       return {
         Order: orderWithRelations,
         sessionId: session.id,
       };
     } catch (error) {
-      // Rollback en caso de error
-      await queryRunner.rollbackTransaction();
       this.logger.error(
-        `Failed to create order for user ${userId}: ${error.message}`,
+        `Transaction failed for user ${userId}: ${error.message}`,
         error.stack
       );
-      // Re-lanzar el error o lanzar uno más específico
+      await queryRunner.rollbackTransaction();
+      this.logger.log('Transaction rolled back.');
       throw error;
     } finally {
-      // Liberar el QueryRunner
       await queryRunner.release();
+      this.logger.log('Query runner released.');
     }
   }
 
-  // --- Funciones auxiliares de ejemplo ---
+  // --- Funciones auxiliares ---
   private calculateShipping(dto: CreateOrderDto): number {
-    /* Lógica de cálculo de envío */ return 5.0;
+    return 5.0;
   }
   private calculateTaxes(subtotal: number, dto: CreateOrderDto): number {
-    /* Lógica de impuestos */ return subtotal * 0.16;
+    return subtotal * 0.16;
   }
-
-  private readonly logger = new Logger(OrderService.name);
 
   @OnEvent('checkout.session.completed')
   async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
     this.logger.log(
       `Handling checkout.session.completed for Session ID: ${session.id}`
     );
-
-    // --- 1. Extrae tu ID interno y el Payment Intent ID ---
     const internalOrderId = session.metadata?.internal_order_id;
     const paymentIntentId =
       typeof session.payment_intent === 'string'
         ? session.payment_intent
         : session.payment_intent?.id;
 
-    if (!internalOrderId) {
+    if (!internalOrderId || !paymentIntentId) {
       this.logger.error(
-        `Missing internal_order_id in metadata for checkout.session.completed: ${session.id}`
-      );
-      return;
-    }
-    if (!paymentIntentId) {
-      this.logger.error(
-        `Missing payment_intent ID in checkout.session.completed: ${session.id}`
+        `Webhook Error: Missing required data (internalOrderId or paymentIntentId) in checkout.session.completed: ${session.id}`,
+        { internalOrderId, paymentIntentId }
       );
       return;
     }
 
-    // Busca la orden usando TU ID interno (UUID) ---
     const order = await this.orderRepository.findOne({
       where: { id: internalOrderId },
     });
-
     if (!order) {
       this.logger.error(
         `Order with internal ID ${internalOrderId} (from metadata) not found. Webhook might be processed before order creation completed or ID mismatch.`
@@ -267,15 +273,13 @@ export class OrderService {
       return;
     }
 
-    //  Verifica si ya fue procesada
     if (order.paymentStatus === 'completed') {
       this.logger.log(
-        `Order ${order.id} already marked as completed. Ignoring redundant checkout.session.completed event.`
+        `Order ${order.id} already marked as completed. Ignoring.`
       );
       return;
     }
 
-    // Actualiza la orden con los datos del pago exitoso ---
     order.paymentStatus = 'completed';
     order.orderStatus = 'processing';
     order.transactionId = paymentIntentId;
@@ -287,7 +291,7 @@ export class OrderService {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to save updated order ${order.id} after checkout.session.completed: ${error.message}`,
+        `Failed to save updated order ${order.id}: ${error.message}`,
         error.stack
       );
     }
@@ -296,47 +300,31 @@ export class OrderService {
   @OnEvent('payment_intent.succeeded')
   async handlePaymentSucceededEvent(paymentIntent: Stripe.PaymentIntent) {
     this.logger.log(
-      `Handling payment.succeeded event for PaymentIntent: ${paymentIntent.id}`
+      `Handling payment.succeeded event for PaymentIntent: ${paymentIntent.id}. (Primarily for logging/backup)`
     );
-
-    // Intenta encontrar la orden por transactionId
     const order = await this.findOneByPaymentIntentId(paymentIntent.id);
-
-    console.log(order);
-    // Es normal que la orden no se encuentre si este evento llega antes que checkout.session.completed
-    if (!order) {
+    if (order && order.paymentStatus !== 'completed') {
       this.logger.warn(
-        `Order not found for successful PaymentIntent ID: ${paymentIntent.id}. Possibly checkout.session.completed hasn't updated it yet.`
+        `Order ${order.id} found via payment.succeeded but not yet marked completed by checkout webhook. Updating as fallback.`
       );
-      return; // No hagas nada más si no la encuentras
-    }
-
-    // Si la encuentra, verifica si ya está completada (idempotencia)
-    if (order.paymentStatus === 'completed') {
+      order.paymentStatus = 'completed';
+      order.orderStatus = 'processing';
+      // transactionId ya debería coincidir
+      try {
+        await this.orderRepository.save(order);
+      } catch (error) {
+        this.logger.error(
+          `Failed to save order ${order.id} via payment.succeeded fallback: ${error.message}`,
+          error.stack
+        );
+      }
+    } else if (order) {
       this.logger.log(
-        `Order ${order.id} already completed. Ignoring redundant payment.succeeded event.`
+        `Order ${order.id} already completed. Ignoring redundant payment.succeeded.`
       );
-      return;
-    }
-
-    // Si por alguna razón checkout.session.completed falló pero este sí encuentra la orden
-    // (y no está completada), puedes actualizarla aquí como respaldo.
-    this.logger.log(
-      `Updating order ${order.id} status via payment.succeeded as a fallback.`
-    );
-    order.paymentStatus = 'completed';
-    order.orderStatus = 'processing';
-    // El transactionId ya debería coincidir si la encontró
-
-    try {
-      await this.orderRepository.save(order);
-      this.logger.log(
-        `Order ${order.id} updated via payment.succeeded fallback to status ${order.orderStatus} / ${order.paymentStatus}.`
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to save updated order ${order.id} via payment.succeeded fallback: ${error.message}`,
-        error.stack
+    } else {
+      this.logger.warn(
+        `Order not found for payment.succeeded ${paymentIntent.id}. Checkout webhook likely handles this.`
       );
     }
   }
@@ -348,21 +336,17 @@ export class OrderService {
     );
     const order = await this.findOneByPaymentIntentId(paymentIntent.id);
     if (!order) {
-      // Si no la encuentra, puede ser que el checkout.session ni siquiera se completó
-      // o que el ID aún no se guardó. Es menos crítico que en el caso de éxito.
       this.logger.warn(
         `Order not found for failed PaymentIntent ID: ${paymentIntent.id}. Cannot mark as failed.`
       );
-      return; // Cambiado de 'return null' a 'return'
+      return;
     }
-
     if (order.paymentStatus === 'failed' || order.orderStatus === 'cancelled') {
       this.logger.log(
         `Order ${order.id} already failed/cancelled. Ignoring payment.failed event.`
       );
-      return; // Cambiado de 'return null' a 'return'
+      return;
     }
-
     order.paymentStatus = 'failed';
     order.orderStatus = 'cancelled';
     try {
@@ -379,14 +363,20 @@ export class OrderService {
   }
 
   async findOneByPaymentIntentId(paymentId: string): Promise<Order | null> {
-    console.log(`Searching for order with transactionId: ${paymentId}`);
-
+    if (!paymentId) {
+      this.logger.warn(
+        'findOneByPaymentIntentId called with null or undefined paymentId.'
+      );
+      return null;
+    }
+    this.logger.log(`Searching for order with transactionId: ${paymentId}`);
     const order = await this.orderRepository.findOne({
-      where: {
-        transactionId: paymentId,
-      },
+      where: { transactionId: paymentId },
       relations: ['user', 'items', 'items.product', 'shippingAddress'],
     });
+    if (!order) {
+      this.logger.warn(`Order with transactionId ${paymentId} not found.`);
+    }
     return order;
   }
 
@@ -397,14 +387,12 @@ export class OrderService {
     }
     const orders = await this.orderRepository.find({
       where: { user: { id: userId } },
-      relations: ['user', 'items', 'items.product'],
+      relations: ['user', 'items', 'items.product', 'shippingAddress'],
       order: {
         orderDate: 'DESC',
       },
     });
-    if (!orders || orders.length === 0) {
-      throw new NotFoundException(`No orders found for user with id ${userId}`);
-    }
+
     return orders;
   }
 }
