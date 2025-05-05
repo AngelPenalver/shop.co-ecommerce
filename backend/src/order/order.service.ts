@@ -160,6 +160,7 @@ export class OrderService {
       }
 
       // Crear la Entidad Order
+      console.log(paymentIntentId);
       const newOrder = queryRunner.manager.create(Order, {
         id: newOrderId,
         user: user,
@@ -300,6 +301,7 @@ export class OrderService {
     // Intenta encontrar la orden por transactionId
     const order = await this.findOneByPaymentIntentId(paymentIntent.id);
 
+    console.log(order);
     // Es normal que la orden no se encuentre si este evento llega antes que checkout.session.completed
     if (!order) {
       this.logger.warn(

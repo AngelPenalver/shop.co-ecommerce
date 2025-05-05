@@ -35,7 +35,7 @@ export class AddressService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return this.addressRepository.find({
+    return await this.addressRepository.find({
       where: { user: user },
     });
   }

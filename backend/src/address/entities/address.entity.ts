@@ -1,6 +1,12 @@
 import { Order } from 'src/order/entities/order.entity';
 import { User } from 'src/users/entities/user.entity';
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('address')
 export class Address {
