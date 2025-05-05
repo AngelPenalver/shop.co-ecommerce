@@ -145,7 +145,7 @@ export class OrderService {
       const newOrderId = uuidv4();
 
       const session = await this.stripeService.createCheckoutSession(
-        newOrderId,
+        'temp_order_id',
         stripeLineItems
       );
       // Extraer el ID del Payment Intent de forma segura
@@ -173,7 +173,7 @@ export class OrderService {
         ),
         paymentStatus: 'pending',
         paymentMethod: 'credit_card',
-        transactionId: null,
+        transactionId: paymentIntentId,
         shippingAddress: orderShippingAddress,
       });
 
