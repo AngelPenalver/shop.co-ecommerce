@@ -162,7 +162,7 @@ export class OrderService {
         Order,
         preliminaryOrder
       ); // Guarda para obtener ID
-      const internalOrderId = savedOrder.id; // ¡Este es el ID interno (UUID)!
+      const internalOrderId = savedOrder.id;
       this.logger.log(
         `Preliminary order saved with internal ID: ${internalOrderId}`
       );

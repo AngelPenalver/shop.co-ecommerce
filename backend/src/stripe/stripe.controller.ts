@@ -3,11 +3,8 @@ import {
   Post,
   Req,
   Headers,
-  Res,
-  Inject,
   BadRequestException,
   Logger,
-  // Quita forwardRef si ya no se usa
 } from '@nestjs/common';
 import { Request } from 'express';
 import Stripe from 'stripe';
@@ -23,7 +20,7 @@ interface RawBodyRequest<T> extends Request {
 export class StripeWebhookController {
   private readonly logger = new Logger(StripeWebhookController.name);
   private readonly webhookSecret: string;
-  private readonly stripeClient: Stripe; 
+  private readonly stripeClient: Stripe;
 
   constructor(
     private readonly stripeService: StripeService,
@@ -31,7 +28,6 @@ export class StripeWebhookController {
     private readonly configService: ConfigService
   ) {
     this.stripeClient = this.stripeService.getStripeClient();
-
     const webhookSecret = this.configService.get<string>(
       'STRIPE_WEBHOOK_SECRET'
     );
@@ -49,7 +45,6 @@ export class StripeWebhookController {
     if (!signature) {
       throw new BadRequestException('Missing Stripe signature');
     }
-
     if (!req.rawBody) {
       throw new BadRequestException(
         'Webhook request does not contain raw body. Ensure raw body parser is configured correctly for this route.'
@@ -57,7 +52,6 @@ export class StripeWebhookController {
     }
 
     let event: Stripe.Event;
-
     try {
       event = this.stripeClient.webhooks.constructEvent(
         req.rawBody,
@@ -74,19 +68,31 @@ export class StripeWebhookController {
     this.logger.log(`Received Stripe event: ${event.id}, type: ${event.type}`);
 
     switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object as Stripe.Checkout.Session;
+        this.logger.log(
+          `CheckoutSession ${session.id} completed. Emitting event 'checkout.session.completed'.`
+        );
+        this.eventEmitter.emit('checkout.session.completed', session);
+        break;
+
       case 'payment_intent.succeeded':
         const paymentIntentSucceeded = event.data
           .object as Stripe.PaymentIntent;
         this.logger.log(
-          `PaymentIntent ${paymentIntentSucceeded.id} succeeded. Emitting event.`
+          `PaymentIntent ${paymentIntentSucceeded.id} succeeded. Emitting event 'payment.succeeded'.`
         );
         this.eventEmitter.emit('payment.succeeded', paymentIntentSucceeded);
         break;
+
       case 'payment_intent.payment_failed':
         const paymentIntentFailed = event.data.object as Stripe.PaymentIntent;
-        this.logger.warn(`PaymentIntent ${paymentIntentFailed.id} failed. Emitting event.`); 
+        this.logger.warn(
+          `PaymentIntent ${paymentIntentFailed.id} failed. Emitting event 'payment.failed'.`
+        );
         this.eventEmitter.emit('payment.failed', paymentIntentFailed);
         break;
+
       default:
         this.logger.log(`Unhandled event type ${event.type}`);
     }
