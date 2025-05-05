@@ -148,6 +148,7 @@ export class OrderService {
         'temp_order_id',
         stripeLineItems
       );
+      console.log(session);
       // Extraer el ID del Payment Intent de forma segura
       let paymentIntentId: string | null = null;
       if (session.payment_intent) {
