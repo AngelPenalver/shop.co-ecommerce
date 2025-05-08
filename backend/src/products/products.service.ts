@@ -40,9 +40,7 @@ export class ProductsService {
     return { message: 'Product successfully created', product: product };
   }
 
-  async findAll(
-    findAllProductsDto: FindAllProductsDto
-  ): Promise<{
+  async findAll(findAllProductsDto: FindAllProductsDto): Promise<{
     data: Product[];
     count: number;
     currentPage: number;

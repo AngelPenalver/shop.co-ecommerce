@@ -8,12 +8,15 @@ import {
   Delete,
   Req,
   UseGuards,
+  Query,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { FindAllProductsDto } from './dto/find-all-product.dto';
 
 @Controller('product')
 export class ProductsController {
@@ -33,10 +36,18 @@ export class ProductsController {
   @ApiResponse({ status: 200, description: 'Products found' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(
+    @Query(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      })
+    )
+    query: FindAllProductsDto
+  ) {
+    return this.productsService.findAll(query);
   }
-
   @ApiOperation({ summary: 'Find product by ID' })
   @ApiResponse({ status: 200, description: 'Product found' })
   @ApiResponse({ status: 404, description: 'Product not found' })
