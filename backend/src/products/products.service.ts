@@ -6,6 +6,7 @@ import { Product } from './entities/product.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
 import { ProductResponseDto } from './dto/response-product.dto';
+import { FindAllProductsDto } from './dto/find-all-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -39,9 +40,38 @@ export class ProductsService {
     return { message: 'Product successfully created', product: product };
   }
 
-  async findAll(): Promise<Product[]> {
-    const products = await this.productServices.find();
-    return products;
+  async findAll(
+    findAllProductsDto: FindAllProductsDto
+  ): Promise<{
+    data: Product[];
+    count: number;
+    currentPage: number;
+    totalPages: number;
+    limit: number;
+  }> {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = 'name',
+      sortOrder = 'ASC',
+    } = findAllProductsDto;
+    const skip = (page - 1) * limit;
+
+    const [products, totalCount] = await this.productServices.findAndCount({
+      skip: skip,
+      take: limit,
+      order: {
+        [sortBy]: sortOrder.toUpperCase(), // Asegura que sortOrder sea 'ASC' o 'DESC'
+      },
+    });
+
+    return {
+      data: products,
+      count: totalCount,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalCount / limit),
+      limit: Number(limit),
+    };
   }
 
   async findOneById(id: number): Promise<Product> {
