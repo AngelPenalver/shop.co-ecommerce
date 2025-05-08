@@ -51,10 +51,11 @@ export class OrderService {
     if (!user) {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
-    const selectedShippingAddress = await this.addressService.findOneById({
-      userId,
-      id: createOrderDto.addressId,
-    });
+    const selectedShippingAddress =
+      await this.addressService.findOneByIdForService({
+        userId,
+        id: createOrderDto.addressId,
+      });
     if (!selectedShippingAddress) {
       throw new NotFoundException(
         `Address with id ${createOrderDto.addressId} not found`

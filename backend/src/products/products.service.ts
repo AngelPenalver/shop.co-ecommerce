@@ -15,15 +15,10 @@ export class ProductsService {
     private readonly usersService: UsersService
   ) {}
 
-  async create({
-    name,
-    subtitle,
-    description,
-    price,
-    userId,
-    image,
-    stock,
-  }: CreateProductDto): Promise<ProductResponseDto> {
+  async create(
+    { name, subtitle, description, price, image, stock }: CreateProductDto,
+    userId: string
+  ): Promise<ProductResponseDto> {
     //we search for the user, if the user does not exist an error of not found is sent
     const user = await this.usersService.findOneById(userId);
 

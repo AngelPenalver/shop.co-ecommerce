@@ -10,9 +10,6 @@ export class CreateProductDto {
   @IsString()
   description: string;
 
-  @IsUUID()
-  userId: string;
-
   @IsNumber()
   price: number;
 
