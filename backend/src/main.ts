@@ -10,8 +10,8 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('Ciclon ecommerce api docs')
-    .setDescription('The ciclon ecommerce API description')
+    .setTitle('Funiro ecommerce api docs')
+    .setDescription('Funiro ecommerce API description')
     .setVersion('1.0')
     .build();
 
