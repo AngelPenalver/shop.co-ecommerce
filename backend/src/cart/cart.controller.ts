@@ -30,7 +30,7 @@ export class CartController {
   @ApiOperation({ summary: 'Get user cart' })
   @ApiResponse({ status: 200, description: 'Cart found' })
   @ApiResponse({ status: 404, description: 'Cart not found' })
-  @Get('user/')
+  @Get('user')
   async getCart(@Req() req) {
     const userId = req.user.id;
     return this.cartService.findOne(userId);

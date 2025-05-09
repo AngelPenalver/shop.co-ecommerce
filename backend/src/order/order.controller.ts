@@ -16,12 +16,12 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
-  @Post('create/')
+  @Post('create')
   create(@Req() req, @Body() createOrderDto: CreateOrderDto) {
     const userId = req.user.id;
     return this.orderService.createOrder(userId, createOrderDto);
   }
-  @Get('payment/')
+  @Get('payment')
   getByPayment(@Req() req, @Body('paymentId') paymentId: string) {
     const userId = req.user.id;
     return this.orderService.findOneByPaymentIntentId(paymentId);
