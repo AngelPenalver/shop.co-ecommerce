@@ -50,7 +50,7 @@ export class ProductsService {
     const {
       page = 1,
       limit = 10,
-      sortBy = 'name',
+      filterBy = 'name',
       sortOrder = 'ASC',
     } = findAllProductsDto;
     const skip = (page - 1) * limit;
@@ -59,7 +59,7 @@ export class ProductsService {
       skip: skip,
       take: limit,
       order: {
-        [sortBy]: sortOrder.toUpperCase(), // Asegura que sortOrder sea 'ASC' o 'DESC'
+        [filterBy]: sortOrder.toUpperCase(),
       },
     });
 

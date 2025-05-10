@@ -22,7 +22,7 @@ export class FindAllProductsDto {
 
   @IsOptional()
   @IsString({ message: 'SortBy must be a string.' })
-  sortBy?: string = 'name';
+  filterBy?: string = 'name';
 
   @IsOptional()
   @IsEnum(SortOrder, { message: 'SortOrder must be ASC or DESC.' })
