@@ -71,6 +71,34 @@ export class AddressController {
   }
 
   /**
+   * Busca la dirección por defecto.
+   */
+  @ApiOperation({ summary: 'Find address default' })
+  @ApiResponse({ status: 200, description: 'Address found' })
+  @ApiResponse({ status: 404, description: 'Address not found' })
+  @Get('default')
+  findDefault(@Req() req): Promise<Address> {
+    const userId = req.user.id;
+    return this.addressService.findByDefaultAddress(userId);
+  }
+
+  /**
+   * Actuliza la dirección por defecto.
+   */
+  @ApiOperation({ summary: 'Update address default' })
+  @ApiResponse({ status: 201, description: 'Address found' })
+  @ApiResponse({ status: 404, description: 'Address not found' })
+  @Patch('default/:addressId')
+  @HttpCode(HttpStatus.OK)
+  updateDefault(
+    @Req() req,
+    @Param('addressId', ParseIntPipe) addressId: number
+  ): Promise<Address> {
+    const userId = req.user.id;
+    return this.addressService.updateDefaultAddress(userId, addressId);
+  }
+
+  /**
    * Actualiza una dirección específica del usuario autenticado.
    */
   @ApiOperation({ summary: 'Update address' })

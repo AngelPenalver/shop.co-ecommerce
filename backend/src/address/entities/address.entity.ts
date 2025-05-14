@@ -42,4 +42,7 @@ export class Address {
     onUpdate: 'CASCADE',
   })
   user: User;
+
+  @Column({ type: 'boolean', default: false })
+  isDefault: boolean;
 }
