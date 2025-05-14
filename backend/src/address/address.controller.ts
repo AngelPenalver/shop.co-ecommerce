@@ -56,6 +56,18 @@ export class AddressController {
   }
 
   /**
+   * Busca la dirección por defecto.
+   */
+  @ApiOperation({ summary: 'Find address default' })
+  @ApiResponse({ status: 200, description: 'Address found' })
+  @ApiResponse({ status: 404, description: 'Address not found' })
+  @Get('/default')
+  findDefault(@Req() req): Promise<Address> {
+    const userId = req.user.id;
+    return this.addressService.findByDefaultAddress(userId);
+  }
+
+  /**
    * Obtiene una dirección específica del usuario autenticado por su ID numérico.
    */
   @ApiOperation({ summary: 'Get address by ID' })
@@ -67,19 +79,8 @@ export class AddressController {
     @Param('addressId', ParseIntPipe) addressId: number
   ): Promise<Address> {
     const userId = req.user.id;
-    return this.addressService.findOneByIdForUser(userId, addressId);
-  }
 
-  /**
-   * Busca la dirección por defecto.
-   */
-  @ApiOperation({ summary: 'Find address default' })
-  @ApiResponse({ status: 200, description: 'Address found' })
-  @ApiResponse({ status: 404, description: 'Address not found' })
-  @Get('default')
-  findDefault(@Req() req): Promise<Address> {
-    const userId = req.user.id;
-    return this.addressService.findByDefaultAddress(userId);
+    return this.addressService.findOneByIdForUser(userId, addressId);
   }
 
   /**
