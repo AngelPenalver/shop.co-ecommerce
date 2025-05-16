@@ -25,14 +25,14 @@ export class AuthService {
     last_name,
   }: RegisterDto): Promise<ResponseDto> {
     // Valida si el usuario existe; si es así, se envía un error indicando que ya existe un usuario con esa dirección de correo electrónico.
-    const user = await this.usersService.findOneByEmail(email);
+    const userFound = await this.usersService.findOneByEmail(email);
 
-    if (user) throw new BadRequestException('Email already exits');
+    if (userFound) throw new BadRequestException('Email already exits');
 
     // La contraseña se hashea y el usuario se crea con la contraseña ya hasheada.
     const hashedPassword = await bcryptjs.hash(password, 10);
 
-    const userData = await this.usersService.create({
+    const user = await this.usersService.create({
       first_name,
       last_name,
       email,
@@ -41,15 +41,17 @@ export class AuthService {
 
     // Se cargan los datos para el token que se enviará.
     const payload = {
-      id: userData.id,
-      email: userData.email,
+      id: user.id,
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
     };
 
     const token = await this.jwtService.signAsync(payload);
 
     return {
       message: 'User created succesfully',
-      email: userData.email,
+      email: user.email,
       token: token,
     };
   }
