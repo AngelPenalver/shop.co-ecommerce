@@ -26,8 +26,9 @@ export class OrderController {
     const userId = req.user.id;
     return this.orderService.findOneByPaymentIntentId(paymentId);
   }
-  @Get(':userId')
-  getAll(@Param('userId') userId: string) {
+  @Get()
+  getAll(@Req() req) {
+    const userId = req.user.id;
     return this.orderService.getAllOrdersByUser(userId);
   }
 }
