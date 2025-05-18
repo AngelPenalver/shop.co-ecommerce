@@ -129,12 +129,10 @@ export class LocationsService {
           )
         )
       );
-      return data
-        .filter((c) => c.fcl === 'P')
-        .map((c) => ({
-          geonameId: c.geonameId,
-          name: c.name,
-        }));
+      return data.map((c) => ({
+        geonameId: c.geonameId,
+        name: c.name,
+      }));
     } catch (error) {
       this.logger.error(
         `Unexpected error in getCitiesByState (${stateGeonameId}): ${error.message}`,
