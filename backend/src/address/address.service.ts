@@ -35,7 +35,7 @@ export class AddressService {
     const savedAddress = await this.addressRepository.save(newAddressEntity);
 
     if (createAddressDto.isDefault) {
-      return this.updateDefaultAddress(userId, savedAddress.id);
+      return await this.updateDefaultAddress(userId, savedAddress.id);
     }
 
     return savedAddress;
