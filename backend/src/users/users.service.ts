@@ -8,7 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { CartService } from 'src/cart/cart.service';
 
 @Injectable()
@@ -35,5 +35,15 @@ export class UsersService {
 
   async findOneById(id: string): Promise<User | null> {
     return await this.userModel.findOne({ where: { id } });
+  }
+  async findOneByIdWithManager(
+    id: string,
+    manager: EntityManager
+  ): Promise<User | null> {
+    const user = await manager.findOne(User, {
+      where: { id },
+    });
+
+    return user;
   }
 }

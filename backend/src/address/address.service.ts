@@ -22,23 +22,31 @@ export class AddressService {
     userId: string,
     createAddressDto: CreateAddressDto
   ): Promise<Address> {
-    const user = await this.userService.findOneById(userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    return this.dataSource.transaction(async (transactionalEntityManager) => {
+      const user = await this.userService.findOneByIdWithManager(
+        userId,
+        transactionalEntityManager
+      );
 
-    const newAddressEntity = this.addressRepository.create({
-      ...createAddressDto,
-      user: user,
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (createAddressDto.isDefault) {
+        await transactionalEntityManager.update(
+          Address,
+          { user: { id: userId }, isDefault: true },
+          { isDefault: false }
+        );
+      }
+
+      const newAddressEntity = transactionalEntityManager.create(Address, {
+        ...createAddressDto,
+        user: user,
+      });
+
+      return transactionalEntityManager.save(newAddressEntity);
     });
-
-    const savedAddress = await this.addressRepository.save(newAddressEntity);
-
-    if (createAddressDto.isDefault) {
-      return await this.updateDefaultAddress(userId, savedAddress.id);
-    }
-
-    return savedAddress;
   }
   /**
    * Busca todas las direcciones de un usuario específico.
