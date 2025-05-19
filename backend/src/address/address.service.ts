@@ -26,13 +26,20 @@ export class AddressService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const address = this.addressRepository.create({
+
+    const newAddressEntity = this.addressRepository.create({
       ...createAddressDto,
       user: user,
     });
-    return this.addressRepository.save(address);
-  }
 
+    const savedAddress = await this.addressRepository.save(newAddressEntity);
+
+    if (createAddressDto.isDefault) {
+      return this.updateDefaultAddress(userId, savedAddress.id);
+    }
+
+    return savedAddress;
+  }
   /**
    * Busca todas las direcciones de un usuario específico.
    */
