@@ -3,7 +3,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { EntityManager, Like, Repository } from 'typeorm';
+import { EntityManager, ILike, Repository } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
 import { ProductResponseDto } from './dto/response-product.dto';
 import { FindAllProductsDto } from './dto/find-all-product.dto';
@@ -60,8 +60,8 @@ export class ProductsService {
     let where: any = {};
     if (search) {
       where = [
-        { name: Like(`%${search}%`) },
-        { description: Like(`%${search}%`) },
+        { name: ILike(`%${search}%`) },
+        { description: ILike(`%${search}%`) },
       ];
     }
 
