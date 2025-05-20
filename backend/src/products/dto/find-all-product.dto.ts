@@ -27,4 +27,8 @@ export class FindAllProductsDto {
   @IsOptional()
   @IsEnum(SortOrder, { message: 'SortOrder must be ASC or DESC.' })
   sortOrder?: SortOrder = SortOrder.ASC;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
 }
