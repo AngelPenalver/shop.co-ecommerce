@@ -4,7 +4,6 @@ import Image from "next/image";
 import QuantityInput from "../../components/QuantityInput";
 import { useSelector } from "react-redux";
 import { RootState } from "../../lib/store";
-import React, { useState } from "react";
 import { CircularProgress } from "@mui/material";
 import { useAddToCart } from "../../hooks/useAddToCart";
 import { useAppDispatch, useAppSelector } from "../../hook";
