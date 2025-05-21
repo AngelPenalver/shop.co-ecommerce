@@ -261,12 +261,9 @@ const addressSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(
-        fetchAddressById.fulfilled,
-        (state, action: PayloadAction<Address>) => {
-          state.loading = false;
-        }
-      )
+      .addCase(fetchAddressById.fulfilled, (state) => {
+        state.loading = false;
+      })
       .addCase(fetchAddressById.rejected, (state, action) => {
         state.loading = false;
         state.error =

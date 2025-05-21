@@ -14,7 +14,7 @@ export default function ProductDetail(): React.JSX.Element {
   const { handleAddToCart, loading } = useAddToCart();
   const dispatch = useAppDispatch();
   const { profile } = useAppSelector((state) => state.userSlice);
-  const [quantity, _setQuantity] = useState(1);
+  const quantity = 1;
   const { currentProduct: product } = useSelector(
     (state: RootState) => state.productSlice
   );

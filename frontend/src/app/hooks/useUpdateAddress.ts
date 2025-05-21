@@ -36,7 +36,6 @@ export default function useUpdateAddress({
     control,
     setValue,
     watch,
-    reset,
     formState: { errors, isSubmitting },
     setError,
     register,
@@ -107,6 +106,7 @@ export default function useUpdateAddress({
         type: "server",
         message: errorUpdate as string,
       });
+      console.log(error);
     }
   };
 
