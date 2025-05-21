@@ -40,8 +40,8 @@ export class StripeService {
           quantity: item.quantity,
         })),
         mode: 'payment',
-        success_url: `${frontendBaseUrl}/order/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${frontendBaseUrl}/order/cancel`,
+        success_url: `${frontendBaseUrl}`,
+        cancel_url: `${frontendBaseUrl}`,
         metadata: {
           internal_order_id: orderId,
         },
