@@ -1,6 +1,6 @@
 "use client";
-import { useForm, SubmitHandler, set } from "react-hook-form";
-import { useAppDispatch } from "../hook"; // Asumiendo que no necesitas useAppSelector aquí
+import { useForm, SubmitHandler } from "react-hook-form";
+import { useAppDispatch } from "../hook";
 import {
   clearCurrentAndDefaultAddress,
   createAddress,
@@ -25,7 +25,7 @@ interface AddressForm {
 export const useRegisterAddress = ({
   setAddressView,
 }: {
-  setAddressView: React.SetStateAction<any>;
+  setAddressView: React.Dispatch<React.SetStateAction<string>>;
 }) => {
   const dispatch = useAppDispatch();
 
@@ -74,16 +74,7 @@ export const useRegisterAddress = ({
         let errorMessage = "Error creating address. Please try again.";
         if (response.payload && typeof response.payload === "string") {
           errorMessage = response.payload;
-        } else if (
-          response.payload &&
-          typeof response.payload === "object" &&
-          (response.payload as any).message
-        ) {
-          errorMessage = (response.payload as any).message;
-        } else if (response.error && response.error.message) {
-          errorMessage = response.error.message;
         }
-
         setError("root.serverError", {
           type: "server",
           message: errorMessage,

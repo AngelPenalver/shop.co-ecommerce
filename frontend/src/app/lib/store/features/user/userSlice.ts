@@ -9,7 +9,6 @@ import { decodeToken } from "@/src/app/utils/decodeToken";
 import { fetchCart } from "../cart/cartSlice";
 import apiClient from "../../../apiClient";
 import { fetchAllAddress } from "../address/addressSlice";
-import { useAppDispatch } from "@/src/app/hook";
 
 interface UserDataRegister {
   first_name: string;

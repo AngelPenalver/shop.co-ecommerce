@@ -2,7 +2,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import styles from "./AccountModal.module.css";
 import { useAppDispatch, useAppSelector } from "@/src/app/hook";
-import Link from "next/link";
 import {
   logoutUser,
   setAuthView,
@@ -10,7 +9,6 @@ import {
 } from "@/src/app/lib/store/features/user/userSlice";
 import { setModalLoading } from "@/src/app/lib/store/features/products/productsSlice";
 import { clearCart } from "@/src/app/lib/store/features/cart/cartSlice";
-import { useRouter } from "next/navigation";
 
 interface AccountModalProps {
   isOpen: boolean;

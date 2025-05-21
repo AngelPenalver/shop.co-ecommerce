@@ -44,7 +44,7 @@ export default function FilterBar(): React.JSX.Element {
         dispatch(setModalLoading(false));
         dispatch(setAlert({ message: error as string, type: "error" }));
       });
-  }, [sortOrder, filterBy]);
+  }, [sortOrder, filterBy, dispatch]);
 
   return (
     <ul

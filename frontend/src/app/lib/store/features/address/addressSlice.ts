@@ -1,8 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import apiClient from "../../../apiClient";
-
 import axios from "axios";
-import { clearStates } from "../location/locationSlice";
 
 interface UserAddress {
   id: number;

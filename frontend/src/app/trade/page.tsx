@@ -4,7 +4,6 @@ import CheckoutButton from "../components/OrderComponents/CheckoutButton";
 import Address from "../components/OrderComponents/Address/Address";
 import styles from "./page.module.css";
 import { useAppDispatch, useAppSelector } from "../hook";
-import { Order } from "../../../../backend/src/order/entities/order.entity";
 import {
   fetchAllAddress,
   fetchDefaultAddress,
@@ -21,14 +20,14 @@ export default function TradePage(): React.JSX.Element {
   useEffect(() => {
     dispatch(fetchAllAddress(""));
     dispatch(fetchDefaultAddress(""));
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (cart?.items.length === 0) {
       dispatch(setAlert({ message: "Cart is empty", type: "error" }));
       router.push("/products");
     }
-  }, [cart]);
+  }, [cart, dispatch]);
 
   return (
     <section className={styles.contain_trade}>

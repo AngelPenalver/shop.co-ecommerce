@@ -26,7 +26,7 @@ import { useRegisterAddress } from "@/src/app/hooks/useCreateAddress";
 export default function CreateAddressForm({
   setAddressView,
 }: {
-  setAddressView: React.SetStateAction<any>;
+  setAddressView: React.Dispatch<React.SetStateAction<string>>;
 }): React.JSX.Element {
   const dispatch = useAppDispatch();
   const {
