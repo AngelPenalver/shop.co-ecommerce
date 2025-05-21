@@ -27,7 +27,11 @@ import styles from "./EditAddressForm.module.css";
 export default function EditAddressForm({
   setAddressView,
 }: {
-  setAddressView: React.Dispatch<React.SetStateAction<string>>;
+  setAddressView: React.Dispatch<
+    React.SetStateAction<
+      "currentAddress" | "editAddress" | "changeAddress" | "createAddress"
+    >
+  >;
 }): React.JSX.Element {
   const dispatch = useAppDispatch();
   const router = useRouter();

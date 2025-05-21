@@ -13,7 +13,11 @@ export default function useUpdateAddress({
   setAddressView,
   id,
 }: {
-  setAddressView: React.Dispatch<React.SetStateAction<string>>;
+  setAddressView: React.Dispatch<
+    React.SetStateAction<
+      "currentAddress" | "editAddress" | "changeAddress" | "createAddress"
+    >
+  >;
   id: number;
 }) {
   interface AddressForm {

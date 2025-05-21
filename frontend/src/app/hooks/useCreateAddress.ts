@@ -25,7 +25,11 @@ interface AddressForm {
 export const useRegisterAddress = ({
   setAddressView,
 }: {
-  setAddressView: React.Dispatch<React.SetStateAction<string>>;
+  setAddressView: React.Dispatch<
+    React.SetStateAction<
+      "currentAddress" | "editAddress" | "changeAddress" | "createAddress"
+    >
+  >;
 }) => {
   const dispatch = useAppDispatch();
 

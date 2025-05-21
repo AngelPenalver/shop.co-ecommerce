@@ -26,7 +26,11 @@ import { useRegisterAddress } from "@/src/app/hooks/useCreateAddress";
 export default function CreateAddressForm({
   setAddressView,
 }: {
-  setAddressView: React.Dispatch<React.SetStateAction<string>>;
+  setAddressView: React.Dispatch<
+    React.SetStateAction<
+      "currentAddress" | "editAddress" | "changeAddress" | "createAddress"
+    >
+  >;
 }): React.JSX.Element {
   const dispatch = useAppDispatch();
   const {
