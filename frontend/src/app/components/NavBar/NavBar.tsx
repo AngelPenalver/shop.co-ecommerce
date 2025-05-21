@@ -2,23 +2,21 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import styles from "./NavBar.module.css";
 import Logo from "@/public/logo.svg";
-import AccountIcon from "@/public/account_icon.svg"; // Renombrado para claridad
-import AccountLogoutIcon from "@/public/account_logout.svg"; // Renombrado
-import FavoritesIcon from "@/public/favorites_icon.svg"; // Renombrado
-import CartIcon from "@/public/cart_icon.svg"; // Renombrado
+import AccountIcon from "@/public/account_icon.svg";
+import AccountLogoutIcon from "@/public/account_logout.svg";
+import CartIcon from "@/public/cart_icon.svg";
 import Image, { StaticImageData } from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import AccountModal from "../auth/AccountModal/AccountModal"; // Este es el dropdown para desktop
+import AccountModal from "../auth/AccountModal/AccountModal";
 import { Search } from "@mui/icons-material";
 import { useAppDispatch, useAppSelector } from "../../hook";
-import { fetchAllProducts } from "../../lib/store/features/products/productsSlice";
 import {
   setModalAuth,
   setAuthView,
-  logoutUser, // Importa logoutUser
+  logoutUser,
 } from "../../lib/store/features/user/userSlice";
-import { setModalLoading } from "../../lib/store/features/products/productsSlice"; // Importa
-import { clearCart } from "../../lib/store/features/cart/cartSlice"; // Importa
+import { setModalLoading } from "../../lib/store/features/products/productsSlice";
+import { clearCart } from "../../lib/store/features/cart/cartSlice";
 
 interface NavItemConfig {
   key: string;
@@ -26,20 +24,19 @@ interface NavItemConfig {
   text?: string;
   link?: string;
   image: StaticImageData;
-  action?: () => void; // Para acciones directas como logout
-  isAccountOption?: boolean; // Para identificar sub-items de cuenta
-  requiresAuth?: boolean; // Para items que solo aparecen si estás logueado
+  action?: () => void;
+  isAccountOption?: boolean;
+  requiresAuth?: boolean;
 }
 
 export default function NavBar(): React.JSX.Element {
   const router = useRouter();
   const { cart } = useAppSelector((state) => state.cartSlice);
   const { token, profile } = useAppSelector((state) => state.userSlice);
-  const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false); // Para el AccountModal de desktop
+  const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const accountRef = useRef<HTMLLIElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pathname = usePathname();
   const [searchTerm, setSearchTerm] = useState("");
   const dispatch = useAppDispatch();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -129,7 +126,7 @@ export default function NavBar(): React.JSX.Element {
   ];
 
   const getVisibleNavItems = () => {
-    let items = baseNavItems.filter(
+    const items = baseNavItems.filter(
       (item) => !item.requiresAuth || (isClient && token)
     );
 
