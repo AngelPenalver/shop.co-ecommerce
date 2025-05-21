@@ -10,11 +10,7 @@ export const useAddToCart = () => {
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((state) => state.cartSlice);
   const { profile } = useAppSelector((state) => state.userSlice);
-  const handleAddToCart = async (
-    productId: number,
-    quantity: number,
-    userId: string
-  ) => {
+  const handleAddToCart = async (productId: number, quantity: number) => {
     await dispatch(setModalLoading(true));
     await dispatch(setModalAddToCart(false));
     if (!profile) {
