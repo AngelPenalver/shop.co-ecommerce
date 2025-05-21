@@ -86,15 +86,15 @@ export default function CheckoutButton() {
           addressId: currentAddress?.id ? currentAddress.id : defaultAddress.id,
         })
       ).unwrap();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error creating order:", err);
       const errorMessage =
         typeof err === "string"
           ? err
-          : err?.message || "Could not create the order. Please try again.";
+          : "Could not create the order. Please try again.";
       setCheckoutError(errorMessage);
     }
-  }, [dispatch, profile, cart, defaultAddress]);
+  }, [dispatch, profile, cart, defaultAddress, currentAddress?.id]);
 
   const deliveryFee = 15.0;
   const subtotal = cart?.total ?? 0;

@@ -74,7 +74,7 @@ export default function Address() {
     setTimeout(() => {
       dispatch(setModalLoading(false));
     }, 1300);
-  }, [addressView]);
+  }, [addressView, dispatch]);
 
   if (addressView === "currentAddress") {
     return (

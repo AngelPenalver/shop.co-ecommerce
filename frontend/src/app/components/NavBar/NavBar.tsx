@@ -27,7 +27,7 @@ export default function NavBar(): React.JSX.Element {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const accountRef = useRef<HTMLLIElement>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pathname = usePathname();
   const [isSearch, setIsSearch] = useState(false);
   const [search, setSearch] = useState("");
@@ -65,9 +65,9 @@ export default function NavBar(): React.JSX.Element {
       await dispatch(fetchAllProducts(params));
     }
   };
+
   const handleChangeInput = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target;
-    setSearch(value);
+    setSearch(event.target.value);
   };
 
   const navItems: Record<string, NavItem> = {
@@ -92,32 +92,23 @@ export default function NavBar(): React.JSX.Element {
   };
 
   useEffect(() => {
+    const currentHoverTimeout = hoverTimeoutRef.current;
     return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
+      if (currentHoverTimeout) {
+        clearTimeout(currentHoverTimeout);
       }
     };
   }, []);
 
   useEffect(() => {
-    if (pathname === "/products") {
-      setIsSearch(true);
-    } else {
-      setIsSearch(false);
-    }
+    setIsSearch(pathname === "/products");
   }, [pathname]);
 
-  const lengthCart = () => {
-    const cartLength = cart?.items?.length;
-    const quantityItem = cart?.items?.reduce((acc, item) => {
-      return acc + item.quantity;
-    }, 0);
-    if (cartLength && quantityItem) {
-      return quantityItem;
-    } else {
-      return 0;
-    }
-  };
+  const cartItemCount = useCallback(() => {
+    return (
+      cart?.items?.reduce((acc, item) => acc + (item.quantity || 0), 0) || 0
+    );
+  }, [cart]);
 
   return (
     <nav className={styles.navBarContainer} aria-label="Main navigation">
@@ -137,8 +128,10 @@ export default function NavBar(): React.JSX.Element {
         <input
           placeholder="Search for products, brands, and more..."
           onChange={handleChangeInput}
+          value={search}
+          onKeyDown={(e) => e.key === "Enter" && handleSearchNav()}
         />
-        <div onClick={handleSearchNav}>
+        <div onClick={handleSearchNav} role="button" tabIndex={0}>
           <Search color="inherit" height={4} width={40} />
         </div>
       </div>
@@ -162,18 +155,9 @@ export default function NavBar(): React.JSX.Element {
               className={styles.icon}
               aria-hidden="true"
             />
-
             <div className={styles.nav_text}>
-              {key === "account" && (
-                <p id={styles.user} aria-label="User greeting">
-                  {text}
-                </p>
-              )}
-              {key === "cart" && (
-                <p id={styles.quantity} aria-label="Cart items count">
-                  {lengthCart()}
-                </p>
-              )}
+              {key === "account" && <p id={styles.user}>{text}</p>}
+              {key === "cart" && <p id={styles.quantity}>{cartItemCount()}</p>}
               <span className={styles.navText}>{name}</span>
             </div>
           </li>
