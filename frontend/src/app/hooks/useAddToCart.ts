@@ -10,7 +10,6 @@ export const useAddToCart = () => {
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((state) => state.cartSlice);
   const { profile } = useAppSelector((state) => state.userSlice);
-  console.log(profile?.id)
   const handleAddToCart = async (
     productId: number,
     quantity: number,
@@ -30,7 +29,6 @@ export const useAddToCart = () => {
       }, 1300);
       return;
     }
-    console.log(userId)
     const result = await dispatch(
       addProductToCart({ productId, quantity, userId })
     );

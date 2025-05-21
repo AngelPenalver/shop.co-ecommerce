@@ -10,6 +10,7 @@ import {
 } from "@/src/app/lib/store/features/user/userSlice";
 import { setModalLoading } from "@/src/app/lib/store/features/products/productsSlice";
 import { clearCart } from "@/src/app/lib/store/features/cart/cartSlice";
+import { useRouter } from "next/navigation";
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -24,26 +25,24 @@ export default function AccountModal({
 }: AccountModalProps) {
   const dispatch = useAppDispatch();
   const { token } = useAppSelector((state) => state.userSlice);
+  const { profile } = useAppSelector((state) => state.userSlice);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const modalRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Calcula la posición del modal
   const updatePosition = useCallback(() => {
     if (anchorElement) {
       const rect = anchorElement.getBoundingClientRect();
       setPosition({
-        top: rect.bottom + window.scrollY + 5, // 5px de margen
-        left: rect.left + window.scrollX - 100, // Ajuste horizontal
+        top: rect.bottom + window.scrollY + 5,
+        left: rect.left + window.scrollX - 100,
       });
     }
   }, [anchorElement]);
 
-  // Actualiza posición cuando se abre o cambia el anchor
   useEffect(() => {
     if (isOpen) {
       updatePosition();
-      // Agrega listener para reposicionar en scroll/resize
       window.addEventListener("scroll", updatePosition);
       window.addEventListener("resize", updatePosition);
     }
@@ -54,7 +53,6 @@ export default function AccountModal({
     };
   }, [isOpen, updatePosition]);
 
-  // Limpia timeout al desmontar
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -73,9 +71,9 @@ export default function AccountModal({
   const handleMouseLeave = () => {
     timeoutRef.current = setTimeout(() => {
       onClose();
-    }, 300); // 300ms antes de cerrar
+    }, 300);
   };
-  // Abrir modal de registro
+
   const handleModalRegister = () => {
     onClose();
     dispatch(setModalAuth(true));
@@ -87,15 +85,16 @@ export default function AccountModal({
     dispatch(setAuthView("login"));
   };
 
-  const handleLogout = async() => {
-    dispatch(setModalLoading(true))
-    await dispatch(logoutUser())
-    await dispatch(clearCart())
-    onClose()
+  const handleLogout = async () => {
+    dispatch(setModalLoading(true));
+    await dispatch(logoutUser());
+    await dispatch(clearCart());
+    onClose();
     setTimeout(() => {
-      dispatch(setModalLoading(false))
+      dispatch(setModalLoading(false));
     }, 1000);
-    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -112,15 +111,15 @@ export default function AccountModal({
       {token ? (
         <div className={styles.modalContent}>
           <div className={styles.userInfo}>
-            <p className={styles.userName}>{"Usuario"}</p>
+            <p className={styles.userName}>
+              {profile?.first_name} {profile?.last_name}
+            </p>
           </div>
-          <Link href="/profile" className={styles.modalItem} onClick={onClose}>
-            My Profile
-          </Link>
-          <Link href="/orders" className={styles.modalItem} onClick={onClose}>
-            My Orders
-          </Link>
-          <button onClick={handleLogout} className={`${styles.modalItem} ${styles.logout}`}>
+
+          <button
+            onClick={handleLogout}
+            className={`${styles.modalItem} ${styles.logout}`}
+          >
             Sign Out
           </button>
         </div>

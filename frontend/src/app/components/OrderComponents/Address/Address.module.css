@@ -1,0 +1,95 @@
+.addressContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.addressContainer a {
+  text-decoration: underline;
+  color: #000;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.changeAddressContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+.changeAddressContainer ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.changeAddressContainer ul li a {
+  text-decoration: underline;
+  color: #000;
+  cursor: pointer;
+  width: fit-content;
+  margin: 0 0.3rem;
+}
+.changeAddressContainer a {
+  text-decoration: underline;
+  color: #000;
+  cursor: pointer;
+  width: fit-content;
+}
+.buttonContainer {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin: 1rem;
+}
+.buttonContainer button {
+  padding: 0.7rem 1.5rem;
+  border-radius: 28px;
+  background-color: transparent;
+  color: #000;
+  border: 1.5px solid #000;
+  font-size: clamp(0.75rem, 3vw, 0.9rem);
+  cursor: pointer;
+  letter-spacing: 0.7px;
+  transition: all 0.3s ease;
+}
+.buttonContainer button:hover {
+  background-color: #000;
+  color: #fff;
+}
+.buttonContainer button:active {
+  background-color: #000;
+  color: #fff;
+}
+.createAddressContainer,
+.editAddressContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.createAddressContainer,
+.editAddressContainer button {
+  padding: 0.7rem 1.5rem;
+  border-radius: 28px;
+  background-color: transparent;
+  color: #000;
+  border: 1.5px solid #000;
+  font-size: clamp(0.75rem, 3vw, 0.9rem);
+  cursor: pointer;
+  letter-spacing: 0.7px;
+  transition: all 0.3s ease;
+  margin: 0.5rem 0;
+}
+.createAddressContainer,
+.editAddressContainer button:hover {
+  background-color: #000;
+  color: #fff;
+}

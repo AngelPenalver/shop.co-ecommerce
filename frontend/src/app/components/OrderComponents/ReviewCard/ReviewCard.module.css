@@ -1,0 +1,41 @@
+.review_card {
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem;
+  gap: 1rem;
+}
+.review_card_content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.review_card_content > h2 {
+  font-size: clamp(1.15rem, 3vw, 1.4rem);
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  color: var(--text-color);
+  margin: 0;
+}
+.review_card_content > h3 {
+  font-size: clamp(1rem, 3vw, 1rem);
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  color: #000000ce;
+  text-transform: uppercase;
+  margin: 0;
+}
+.review_card_content > span {
+  font-size: clamp(0.8rem, 3vw, 1.2rem);
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  color: #000000;
+  margin: 0;
+}
+.review_card_content > p {
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  color: #0000008d;
+  margin: 0;
+  margin-top: 1.5rem;
+}

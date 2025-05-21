@@ -107,7 +107,6 @@
 }
 .products_grid {
   display: flex;
-
   gap: 1.5rem;
   padding: 1rem;
   overflow-x: auto;
@@ -115,6 +114,9 @@
   -webkit-overflow-scrolling: touch;
   white-space: nowrap;
   list-style: none;
+}
+.Link {
+  text-decoration: none;
 }
 @media (max-width: 820px) {
   .home_header {
@@ -148,12 +150,12 @@
   }
   .products_grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 4rem;
     padding: 2rem 6rem;
     align-items: center;
     justify-content: center;
-    transition: .5s;
+    transition: 0.5s;
   }
 
   .hero_content {
@@ -191,11 +193,15 @@
     font-weight: 600;
     line-height: 150%;
     cursor: pointer;
-    transition: .2s;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
   }
-  #show_button:hover{
+  #show_button:hover {
     background: #b88f2f27;
-    transition: .2s;
+    transition: 0.2s;
     transform: scale(1.01);
   }
 }
@@ -209,9 +215,8 @@
     gap: 1.5rem;
   }
 }
-@media (min-width:1800px) {
-  .products_grid{
+@media (min-width: 1800px) {
+  .products_grid {
     grid-template-columns: repeat(4, 1fr);
   }
-  
 }

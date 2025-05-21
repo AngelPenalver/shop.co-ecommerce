@@ -61,9 +61,9 @@ export default function ProductDetail(): React.JSX.Element {
           <div id={styles.contain_buttons}>
             <h5>Quantity</h5>
             <QuantityInput
-              max={product.stock}
-              quantity={quantity}
-              setQuantity={setQuantity}
+              maxQuantity={product.stock}
+              initialQuantity={quantity}
+              productId={product.id}
             />
             <button id={styles.buttons_buy}>Buy now</button>
             <div>

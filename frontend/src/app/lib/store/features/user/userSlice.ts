@@ -1,4 +1,3 @@
-// store/userSlice.ts
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import {
@@ -8,7 +7,9 @@ import {
 } from "@/src/app/utils/storage";
 import { decodeToken } from "@/src/app/utils/decodeToken";
 import { fetchCart } from "../cart/cartSlice";
-import { fecthAllOrders } from "../orders/ordersSlice";
+import apiClient from "../../../apiClient";
+import { fetchAllAddress } from "../address/addressSlice";
+import { useAppDispatch } from "@/src/app/hook";
 
 interface UserDataRegister {
   first_name: string;
@@ -43,7 +44,6 @@ interface InitialStateUser {
   authModal: AuthModalState;
   initialized: boolean;
 }
-
 // Estado inicial
 const getInitialState = (): InitialStateUser => ({
   token: getLocalStorageItem("authToken"),
@@ -75,12 +75,23 @@ axios.interceptors.request.use(
 // Thunks
 export const registerUser = createAsyncThunk(
   "user/register",
-  async (userData: UserDataRegister, { rejectWithValue }) => {
+  async (userData: UserDataRegister, { rejectWithValue, dispatch }) => {
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
-        userData
-      );
+      const response = await apiClient.post("/auth/register", userData);
+      const token = response.data.token;
+      if (!token) {
+        return rejectWithValue("Respuesta de login inválida del servidor.");
+      }
+      const decoded = decodeToken(token);
+
+      const userProfile: UserProfile = {
+        id: decoded.id,
+        email: decoded.email,
+        first_name: decoded.first_name,
+        last_name: decoded.last_name,
+      };
+      dispatch(setUserData({ token, profile: userProfile }));
+
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -93,12 +104,24 @@ export const registerUser = createAsyncThunk(
 
 export const loginUser = createAsyncThunk(
   "user/login",
-  async (userData: UserDataLogin, { rejectWithValue }) => {
+  async (userData: UserDataLogin, { rejectWithValue, dispatch }) => {
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-        userData
-      );
+      const response = await apiClient.post("/auth/login", userData);
+      const token = response.data.token;
+      if (!token) {
+        return rejectWithValue("Respuesta de login inválida del servidor.");
+      }
+
+      const decoded = await decodeToken(token);
+
+      const userProfile: UserProfile = {
+        id: decoded.id,
+        email: decoded.email,
+        first_name: decoded.first_name,
+        last_name: decoded.last_name,
+      };
+      dispatch(setUserData({ token, profile: userProfile }));
+
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -112,11 +135,7 @@ export const loginUser = createAsyncThunk(
 export const logoutUser = createAsyncThunk(
   "user/logout",
   async (_, { dispatch }) => {
-    try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`);
-    } finally {
-      dispatch(clearUserData());
-    }
+    dispatch(clearUserData());
   }
 );
 
@@ -145,8 +164,11 @@ export const initializeAuth = createAsyncThunk(
       try {
         const decoded = decodeToken(token);
         dispatch(setUserData({ token, profile: decoded }));
-        dispatch(fetchCart(decoded.id));
-        dispatch(fecthAllOrders(decoded.id));
+
+        await Promise.all([
+          dispatch(fetchCart(decoded.id)).unwrap(),
+          dispatch(fetchAllAddress(decoded.id)).unwrap(),
+        ]);
         return decoded;
       } catch (error) {
         dispatch(clearUserData());

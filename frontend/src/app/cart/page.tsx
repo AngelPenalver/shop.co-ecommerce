@@ -16,7 +16,6 @@ export default function Cart(): React.JSX.Element {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-
   useEffect(() => {
     if (profile) {
       dispatch(fetchCart(profile.id));
@@ -72,27 +71,30 @@ export default function Cart(): React.JSX.Element {
           </div>
 
           <aside className={styles.summary} aria-labelledby="summary-heading">
-            <h2 id={styles.title_summary}>Order Summary</h2>
+            <h2>Order Summary</h2>
 
-            <ul className={styles.row_summary}>
+            <ul>
               <li>
-                <span id={styles.row_text}>Subtotal</span>
-                <span id={styles.row_price}>${cart.total.toFixed(2)}</span>
+                <span>Items({cart.items.length})</span>
+                <span>${cart.total.toFixed(2)}</span>
               </li>
               <li>
-                <span id={styles.row_text}>Delivery Fee</span>
-                <span id={styles.row_price}>$15.00</span>
+                <span>Delivery Fee</span>
+                <span>$15.00</span>
               </li>
             </ul>
 
-            <div id={styles.total_summary}>
-              <span id={styles.text_total}>Total</span>
-              <span id={styles.price_total}>
-                ${(cart.total + 15).toFixed(2)}
-              </span>
+            <div className={styles.order_total}>
+              <span>Sub Total</span>
+              <span>${(cart.total + 15).toFixed(2)}</span>
             </div>
-
-            <button id={styles.button_summary} aria-label="Proceed to checkout">
+            <button
+              id={styles.button_summary}
+              aria-label="Proceed to checkout"
+              onClick={() => {
+                router.push("/trade");
+              }}
+            >
               Go to Checkout
             </button>
           </aside>

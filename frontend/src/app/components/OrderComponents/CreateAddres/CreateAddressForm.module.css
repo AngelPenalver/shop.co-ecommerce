@@ -1,0 +1,39 @@
+.createAddressForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 70%;
+  align-items: center;
+  justify-content: center;
+}
+.formGroup {
+  display: flex;
+  width: 80%;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.formGroup div {
+  width: 100%;
+}
+.createAddressForm button {
+  color: #000;
+  cursor: pointer;
+  border: 1px solid #000;
+  background-color: transparent;
+  padding: 0.7rem 1.5rem;
+  border-radius: 62px;
+  flex-shrink: 0;
+  gap: 12px;
+  font-size: clamp(0.75rem, 3vw, 0.9rem);
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
+}
+.createAddressForm button:hover {
+  background-color: #000;
+  color: #fff;
+  opacity: 0.8;
+}

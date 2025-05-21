@@ -7,23 +7,34 @@ import ImageBedroom from "../../public/bedroom_image.png";
 import CardProduct from "./components/cardProduct/cardProducts";
 import { useSelector } from "react-redux";
 import { RootState } from "./lib/store";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAppDispatch } from "./hook";
 import {
   clearCurrentProduct,
   fetchAllProducts,
 } from "./lib/store/features/products/productsSlice";
+import Link from "next/link";
+
+const PRODUCTS_TO_SHOW_ON_HOME = 12;
 
 export default function Home(): React.JSX.Element {
-  const [scroll, setScroll] = useState(12);
   const dispatch = useAppDispatch();
-  const products = useSelector(
-    (state: RootState) => state.productSlice.products
+  const { products, loading, error } = useSelector(
+    (state: RootState) => state.productSlice
   );
 
   useEffect(() => {
-    dispatch(fetchAllProducts());
-  }, [dispatch]);
+    if (products.length < PRODUCTS_TO_SHOW_ON_HOME || products.length === 0) {
+      dispatch(
+        fetchAllProducts({
+          page: 1,
+          limit: PRODUCTS_TO_SHOW_ON_HOME,
+          filterBy: "create_at",
+          sortOrder: "DESC",
+        })
+      );
+    }
+  }, [dispatch, products.length]);
 
   useEffect(() => {
     dispatch(clearCurrentProduct());
@@ -68,11 +79,14 @@ export default function Home(): React.JSX.Element {
         className={styles.cards_content_products}
         aria-labelledby="products-heading"
       >
-        <h2 id="products-heading" hidden>
-          Featured Products
-        </h2>
+        <h2 id="products-heading">Our Products</h2>
+        {loading && products.length === 0 && <p>Loading products...</p>}
+
+        {!loading && products.length === 0 && !error && (
+          <p>There are no featured products available at this time.</p>
+        )}
         <ul className={styles.products_grid}>
-          {products?.slice(0, Math.max(0, scroll)).map((product) => (
+          {products.map((product) => (
             <li key={product.id}>
               <CardProduct
                 id={product.id}
@@ -83,15 +97,9 @@ export default function Home(): React.JSX.Element {
             </li>
           ))}
         </ul>
-        <button
-          onClick={() => {
-            setScroll((prev) => prev + 4);
-          }}
-          id={styles.show_button}
-          aria-label="Load more products"
-        >
-          Show More
-        </button>
+        <Link href={"/products"} id={styles.show_button}>
+          Explorer more
+        </Link>
       </section>
     </main>
   );

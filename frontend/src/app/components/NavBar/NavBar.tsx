@@ -7,10 +7,11 @@ import AccountLogout from "@/public/account_logout.svg";
 import Favorites from "@/public/favorites_icon.svg";
 import Cart from "@/public/cart_icon.svg";
 import Image, { StaticImageData } from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AccountModal from "../auth/AccountModal/AccountModal";
 import { Search } from "@mui/icons-material";
-import { useAppSelector } from "../../hook";
+import { useAppDispatch, useAppSelector } from "../../hook";
+import { fetchAllProducts } from "../../lib/store/features/products/productsSlice";
 
 interface NavItem {
   name: string;
@@ -27,6 +28,10 @@ export default function NavBar(): React.JSX.Element {
   const [isClient, setIsClient] = useState(false);
   const accountRef = useRef<HTMLLIElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout>(null);
+  const pathname = usePathname();
+  const [isSearch, setIsSearch] = useState(false);
+  const [search, setSearch] = useState("");
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     setIsClient(true);
@@ -45,6 +50,25 @@ export default function NavBar(): React.JSX.Element {
     }
     setIsModalOpen(true);
   }, []);
+
+  const handleSearchNav = async () => {
+    const params = {
+      limit: 12,
+      page: 1,
+      ...(search && { search }),
+    };
+
+    if (isSearch) {
+      await dispatch(fetchAllProducts(params));
+    } else {
+      router.push("/products");
+      await dispatch(fetchAllProducts(params));
+    }
+  };
+  const handleChangeInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    setSearch(value);
+  };
 
   const navItems: Record<string, NavItem> = {
     account: {
@@ -75,6 +99,14 @@ export default function NavBar(): React.JSX.Element {
     };
   }, []);
 
+  useEffect(() => {
+    if (pathname === "/products") {
+      setIsSearch(true);
+    } else {
+      setIsSearch(false);
+    }
+  }, [pathname]);
+
   const lengthCart = () => {
     const cartLength = cart?.items?.length;
     const quantityItem = cart?.items?.reduce((acc, item) => {
@@ -86,6 +118,7 @@ export default function NavBar(): React.JSX.Element {
       return 0;
     }
   };
+
   return (
     <nav className={styles.navBarContainer} aria-label="Main navigation">
       <div className={styles.logoContainer}>
@@ -101,9 +134,12 @@ export default function NavBar(): React.JSX.Element {
         />
       </div>
       <div id={styles.search}>
-        <input placeholder="Search for products, brands, and more..." />
-        <div>
-          <Search color="inherit" height={4} width={40}/>
+        <input
+          placeholder="Search for products, brands, and more..."
+          onChange={handleChangeInput}
+        />
+        <div onClick={handleSearchNav}>
+          <Search color="inherit" height={4} width={40} />
         </div>
       </div>
 

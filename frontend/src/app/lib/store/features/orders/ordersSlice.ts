@@ -14,20 +14,16 @@ interface OrderProduct {
   delete_at: string | Date | null;
 }
 
-// Interface para la información de un Usuario (simplificada)
 interface OrderUser {
-  id: string; // Parece UUID
+  id: string;
   first_name: string;
   last_name: string;
   email: string;
-  // Omitimos la contraseña por seguridad al exponer datos
-  // password?: string;
   create_at: string | Date;
   update_at: string | Date;
   delete_at: string | Date | null;
 }
 
-// Interface para un Item dentro de la Orden
 interface OrderLineItem {
   id: number;
   product: OrderProduct;
@@ -35,8 +31,7 @@ interface OrderLineItem {
   unitPrice: string;
 }
 
-// Interface para una Orden individual
-interface Order {
+export interface Order {
   id: string;
   user: OrderUser;
   orderDate: string | Date;
@@ -52,27 +47,35 @@ interface Order {
   items: OrderLineItem[];
   subtotal: string;
   paymentMethod: string | null;
-  transactionId: string | null;
+  sessionId: string;
 }
 
 interface OrderState {
-  orders: Order[]; // Array de órdenes
-  orderDetails: Order | null; // Detalles de una orden específica
-  loading: boolean; // Estado de carga
-  error: string | null; // Mensaje de error
+  orders: Order[];
+  currentOrder: Order | null;
+  loading: boolean;
+  error: string | null;
 }
 const initialState: OrderState = {
-  orderDetails: null,
+  currentOrder: null,
   orders: [],
   loading: false,
   error: null,
 };
 
-export const fecthAllOrders = createAsyncThunk(
-  "orders/fetchAllOrders",
-  async (userId: string, { rejectWithValue }) => {
+export const createOrder = createAsyncThunk(
+  "order/create",
+  async (
+    orderData: {
+      userId: string;
+      addressId: number;
+    },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await apiClient.get(`/order/${userId}`);
+      const response = await apiClient.post(`/order/create`, {
+        addressId: orderData.addressId,
+      });
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -96,15 +99,15 @@ const orderSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fecthAllOrders.pending, (state) => {
+      .addCase(createOrder.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fecthAllOrders.fulfilled, (state, action) => {
+      .addCase(createOrder.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
+        state.currentOrder = action.payload;
       })
-      .addCase(fecthAllOrders.rejected, (state, action) => {
+      .addCase(createOrder.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

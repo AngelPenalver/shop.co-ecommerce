@@ -1,10 +1,6 @@
 import type { NextConfig } from "next";
 
-const linksImages = [
-  "img2.kenayhome.com",
-  "img1.kenayhome.com",
-  "img3.kenayhome.com",
-];
+const linksImages = ["d.media.kavehome.com"];
 
 const nextConfig: NextConfig = {
   images: {

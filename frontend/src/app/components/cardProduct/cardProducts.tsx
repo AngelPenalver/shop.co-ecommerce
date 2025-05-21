@@ -31,7 +31,7 @@ export default function CardProduct({
   const dispatch = useAppDispatch();
   const handleRouter = async (name: string, id: number) => {
     await dispatch(fetchProductById(id));
-    router.push(`/product/${name}`);
+    router.push(`/products/${name.toLowerCase()}`);
   };
 
   const handleOpenModal = async (id: number) => {
@@ -53,7 +53,7 @@ export default function CardProduct({
         <Image
           src={image}
           alt={title}
-          width={370}
+          width={300}
           height={340}
           itemProp="image"
           id={styles.image}

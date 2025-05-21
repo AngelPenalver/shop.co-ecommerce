@@ -38,85 +38,50 @@
 }
 
 .summary {
-  display: flex;
-  padding: 28px 32px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 24px;
-  flex-shrink: 0;
-  border-radius: 20px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  text-align: center;
-  justify-content: center;
-}
-
-#title_summary {
-  color: var(--color-primary-gold);
-  font-size: clamp(1.25rem, 3vw, 1.7rem);
-  font-style: normal;
-  font-weight: 500;
-  line-height: normal;
-}
-
-#row_text {
-  color: rgba(0, 0, 0, 0.692);
-  font-size: clamp(1.1rem, 3vw, 1.25rem);
-  font-style: normal;
-  font-weight: 400;
-  line-height: normal;
-}
-
-#row_price {
-  color: var(--color-primary-gold);
-  font-size: clamp(1.1rem, 3vw, 1.25rem);
-  font-style: normal;
-  font-weight: 600;
-  line-height: normal;
-}
-
-.row_summary {
+  margin-top: 20px;
+  padding: 25px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  width: 400px;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  list-style: none;
   gap: 1rem;
-  padding: 1rem;
-  border-bottom: 1px rgba(0, 0, 0, 0.322) solid;
+  text-align: center;
 }
-
-.row_summary li {
+.summary h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+.summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.summary li {
   display: flex;
-  width: 100%;
   justify-content: space-between;
+  padding: 8px 0;
 }
-
-#total_summary {
+.summary li:not(:last-child) {
+  border-bottom: 1px dashed #eee;
+}
+.summary .order_total {
   display: flex;
-  width: 100%;
-  padding: 1rem;
   justify-content: space-between;
-}
-
-#text_total {
-  font-size: clamp(1.1rem, 3vw, 1.25rem);
-  color: rgba(0, 0, 0, 0.692);
-  font-style: normal;
-  font-weight: 400;
-  line-height: normal;
-}
-
-#price_total {
-  color: var(--color-primary-gold);
-  font-size: clamp(1.1rem, 3vw, 1.25rem);
-  font-style: normal;
-  font-weight: 600;
-  line-height: normal;
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px solid #ddd;
 }
 
 #button_summary {
   display: flex;
-  height: 60px;
-  padding: 16px 54px;
+  height: 50px;
+  padding: 16px 34px;
   justify-content: center;
   align-items: center;
   gap: 12px;
@@ -125,11 +90,12 @@
   border-radius: 62px;
   background: var(--color-primary-gold);
   color: #fff;
-  font-size: clamp(1rem, 3vw, 1.25rem);
+  font-size: clamp(0.9rem, 3vw, 1rem);
   font-style: normal;
   font-weight: 500;
   line-height: normal;
   border: none;
+  cursor: pointer;
 }
 
 .itemsList {
@@ -149,37 +115,37 @@
 .itemsList::-webkit-scrollbar {
   display: none;
 }
-.emptyMain{
+.emptyMain {
   width: 100%;
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.emptyContainer{
+.emptyContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2rem;
 }
-.emptyIllustration{
+.emptyIllustration {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   height: 100%;
 }
-.emptyIllustration img{
+.emptyIllustration img {
   width: 150px;
   height: 150px;
 }
-.emptyTitle{
-  font-size: clamp(.9rem, 3vw, 1.15rem);
+.emptyTitle {
+  font-size: clamp(0.9rem, 3vw, 1.15rem);
   font-style: normal;
   font-weight: 600;
   line-height: normal;
 }
-.emptyButton{
+.emptyButton {
   display: flex;
   height: 60px;
   padding: 16px 54px;
@@ -191,24 +157,23 @@
   border-radius: 62px;
   background: var(--color-primary-gold);
   color: #fff;
-  font-size: clamp(.8rem, 3vw, 1rem);
+  font-size: clamp(0.8rem, 3vw, 1rem);
   font-style: normal;
   font-weight: 600;
   line-height: normal;
-  letter-spacing: .44px;
+  letter-spacing: 0.44px;
   border: none;
   cursor: pointer;
-  transition: .3s;
-
+  transition: 0.3s;
 }
-.emptyButton:hover{
+.emptyButton:hover {
   background: #fff;
   border: 1px solid var(--color-primary-gold);
-  color: var(--color-primary-gold); 
-  transition: .3s;
+  color: var(--color-primary-gold);
+  transition: 0.3s;
 }
-.emptyButton:active{
-  background: #fff
+.emptyButton:active {
+  background: #fff;
 }
 @media (min-width: 821px) {
   .cartContent {
@@ -217,7 +182,7 @@
     align-items: flex-start;
     height: auto;
   }
-  .itemsContain{
+  .itemsContain {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -237,9 +202,9 @@
     padding: 1rem;
     width: 80%;
   }
-.itemsList li{
-  width: 100%;
-}
+  .itemsList li {
+    width: 100%;
+  }
   .summary {
     position: sticky;
     top: 2rem;

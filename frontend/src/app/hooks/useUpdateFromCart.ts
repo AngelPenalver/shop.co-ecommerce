@@ -36,7 +36,7 @@ export const useUpdateFromCart = () => {
     try {
       dispatch(setModalLoading(true));
       const response = await dispatch(
-        removeFromCartFetch({ userId, productId, quantity })
+        removeFromCartFetch({ productId, quantity })
       );
 
       if (removeFromCartFetch.fulfilled.match(response)) {
@@ -83,7 +83,6 @@ export const useUpdateFromCart = () => {
       dispatch(setModalLoading(true));
       const response = await dispatch(
         addProductToCart({
-          userId,
           productId,
           quantity,
         })

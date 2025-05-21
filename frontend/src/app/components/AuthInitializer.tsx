@@ -1,14 +1,18 @@
 "use client";
+
 import { useEffect } from "react";
-import { useAppDispatch } from "../hook";
-import { initializeAuth } from "../lib/store/features/user/userSlice";
+import { initializeAuth } from "@/src/app/lib/store/features/user/userSlice";
+import { useAppDispatch, useAppSelector } from "../hook";
 
 export default function AuthInitializer() {
   const dispatch = useAppDispatch();
+  const { initialized } = useAppSelector((state) => state.userSlice);
 
   useEffect(() => {
-    dispatch(initializeAuth());
-  }, [dispatch]);
+    if (!initialized) {
+      dispatch(initializeAuth());
+    }
+  }, [dispatch, initialized]);
 
   return null;
 }

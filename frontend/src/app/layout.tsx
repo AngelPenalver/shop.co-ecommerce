@@ -27,7 +27,7 @@ export default function RootLayout({
       </head>
       <body>
         <ReduxProvider>
-          <AuthInitializer /> 
+          <AuthInitializer />
           <RouteChangeHandler />
           <AddToCartModal />
           <AuthModal />

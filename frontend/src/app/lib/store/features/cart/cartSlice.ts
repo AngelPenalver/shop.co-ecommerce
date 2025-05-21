@@ -6,7 +6,6 @@ import apiClient from "../../../apiClient";
 interface AddToCartBody {
   quantity: number;
   productId: number;
-  userId: string;
 }
 
 export interface CartItemInterface {
@@ -41,57 +40,50 @@ export const fetchCart = createAsyncThunk<
   Cart,
   string,
   { rejectValue: string }
->("cart/fetchCart", async (userId: string, { rejectWithValue }) => {
+>("cart/fetchCart", async (_, { rejectWithValue }) => {
   try {
-    const response = await apiClient.get<Cart>(`/carts/user/${userId}`);
+    const response = await apiClient.get<Cart>(`/carts/user`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
-    return rejectWithValue("Error desconocido al cargar el carrito");
+    return rejectWithValue("Unknown error when loading the cart");
   }
 });
 
 export const addProductToCart = createAsyncThunk(
-   
   "cart/addProductToCart",
-  async (
-    { quantity, productId, userId }: AddToCartBody,
-    { rejectWithValue }
-  ) => {
+  async ({ quantity, productId }: AddToCartBody, { rejectWithValue }) => {
     try {
-      const response = await apiClient.post<Cart>(
-        `/carts/user/${userId}/items`,
-        { quantity, productId }
-      );
+      const response = await apiClient.post<Cart>(`/carts/user/items`, {
+        quantity,
+        productId,
+      });
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         return rejectWithValue(error.response?.data?.message || error.message);
       }
-      return rejectWithValue("Error desconocido al cargar el carrito");
+      return rejectWithValue("Unknown error when loading the cart");
     }
   }
 );
 
 export const removeFromCartFetch = createAsyncThunk(
   "cart/removeFromCart",
-  async (
-    { quantity, productId, userId }: AddToCartBody,
-    { rejectWithValue }
-  ) => {
+  async ({ quantity, productId }: AddToCartBody, { rejectWithValue }) => {
     try {
-      const response = await apiClient.put<Cart>(
-        `/carts/user/${userId}/items/remove`,
-        { quantity, productId }
-      );
+      const response = await apiClient.put<Cart>(`/carts/user/items/remove`, {
+        quantity,
+        productId,
+      });
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         return rejectWithValue(error.response?.data?.message || error.message);
       }
-      return rejectWithValue("Error desconocido al cargar el carrito");
+      return rejectWithValue("Unknown error when loading the cart");
     }
   }
 );
