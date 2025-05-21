@@ -6,7 +6,7 @@ import AccountIcon from "@/public/account_icon.svg";
 import AccountLogoutIcon from "@/public/account_logout.svg";
 import CartIcon from "@/public/cart_icon.svg";
 import Image, { StaticImageData } from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import AccountModal from "../auth/AccountModal/AccountModal";
 import { Search } from "@mui/icons-material";
 import { useAppDispatch, useAppSelector } from "../../hook";
