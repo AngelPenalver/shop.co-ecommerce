@@ -104,7 +104,7 @@ export default function AddToCartModal() {
                   maxQuantity={product.stock}
                   initialQuantity={1}
                   productId={product.id}
-                  onQuantityChange={handleQuantityChange} 
+                  onQuantityChange={handleQuantityChange}
                 />
 
                 <div className={styles.button_group}>
@@ -112,9 +112,7 @@ export default function AddToCartModal() {
                   <div>
                     <button
                       className={styles.buttons}
-                      onClick={() =>
-                        handleAddToCart(product.id, quantity, profile.id) 
-                      }
+                      onClick={() => handleAddToCart(product.id, quantity)}
                     >
                       {loading ? (
                         <CircularProgress color="inherit" size={24} />
