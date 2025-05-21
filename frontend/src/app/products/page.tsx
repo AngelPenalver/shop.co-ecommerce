@@ -12,7 +12,7 @@ export default function ProductsPage(): React.JSX.Element {
 
   useEffect(() => {
     dispatch(fetchAllProducts({ limit: 12 }));
-  }, []);
+  }, [dispatch]);
 
   return (
     <section>

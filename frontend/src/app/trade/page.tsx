@@ -27,7 +27,7 @@ export default function TradePage(): React.JSX.Element {
       dispatch(setAlert({ message: "Cart is empty", type: "error" }));
       router.push("/products");
     }
-  }, [cart, dispatch]);
+  }, [cart, dispatch, router]);
 
   return (
     <section className={styles.contain_trade}>
