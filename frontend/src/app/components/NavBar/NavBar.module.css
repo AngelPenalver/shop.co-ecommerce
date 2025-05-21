@@ -1,129 +1,296 @@
+/* NavBar.module.css */
+
 .navBarContainer {
-  height: 100px;
-  padding: 2rem;
-  background-color: var(--color-white);
-  position: relative;
-  z-index: 1;
-  width: 100%;
-}
-.nav_list {
-  display: none;
-}
-.nav_item {
+  height: 80px;
+  padding: 1rem 1.5rem;
+  background-color: var(--color-white, #fff);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1000;
+  width: 100%;
+  box-sizing: border-box;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
   cursor: pointer;
-  transition: 0.4s;
-  height: 50px;
 }
-.nav_item:hover {
-  text-decoration: underline;
-  transition: 0.45s;
-  text-underline-offset: 4px;
+
+.searchContainer {
+  display: none;
+  align-items: center;
+  position: relative;
 }
-.nav_item span {
-  font-weight: 600;
-  font-size: clamp(0.9rem, 3vw, 0.9rem);
-  padding: 0;
-  margin: 0;
+.searchInput {
+  width: 100%;
+  padding: 8px 15px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 0.9rem;
 }
-#user {
-  font-family: Poppins;
+.searchInput::placeholder {
+  color: #999;
   font-size: 0.8rem;
-  font-style: normal;
-  line-height: 24px;
+  font-weight: 400;
+}
+.searchButton {
+  background: #333;
+  height: calc(100% - 4px);
+  width: 40px;
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  border-radius: 18px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.searchButton:hover {
+  background: #555;
+}
+.searchButton svg {
+  font-size: 1.25rem;
+}
+
+.menuToggle {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 30px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+}
+
+.menuToggle span {
+  width: 30px;
+  height: 3px;
+  background-color: #333;
+  border-radius: 10px;
+  transition: all 0.3s linear;
+  position: relative;
+  transform-origin: 1px;
+}
+
+.menuToggle.open span:nth-child(1) {
+  transform: rotate(45deg);
+}
+.menuToggle.open span:nth-child(2) {
+  opacity: 0;
+  transform: translateX(20px);
+}
+.menuToggle.open span:nth-child(3) {
+  transform: rotate(-45deg);
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  list-style: none;
   padding: 0;
   margin: 0;
-  margin-bottom: -5px;
-  color: #000000da;
+  position: absolute;
+  top: 80px;
+  left: 0;
+  width: 100%;
+  background-color: var(--color-white, #fff);
+  border-top: 1px solid #e0e0e0;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.1);
+  transform: translateY(-200%);
+  transition: transform 0.3s ease-in-out;
+  z-index: 900;
 }
-#quantity {
-  font-family: Poppins;
-  font-size: 0.8rem;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 24px;
-  padding: 0;
-  margin: 0;
-  margin-bottom: -5px;
-  color: #fff;
-  background: #000;
-  padding: 0.1rem 0.6rem;
-  border-radius: 1rem;
-  text-align: center;
+
+.navList.open {
+  transform: translateY(0);
 }
-.nav_text {
-  height: 100%;
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  box-sizing: border-box;
+  border-bottom: 1px solid #f0f0f0;
+}
+.navItem:last-child {
+  border-bottom: none;
+}
+
+.navItem:hover {
+  background-color: #f9f9f9;
+}
+
+.navTextContainer {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: flex-end;
-  gap: 0.25rem;
-  padding: 0.25rem 0;
+  justify-content: center;
+  gap: 0.1rem;
 }
-#search{
-  display: none;
+
+.userText {
+  font-family: "Poppins", sans-serif;
+  font-size: 0.8rem;
+  font-style: normal;
+  line-height: 1.2;
+  padding: 0;
+  margin: 0;
+  color: #555;
+}
+
+.itemQuantity {
+  font-family: "Poppins", sans-serif;
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+  margin: 0;
+  color: var(--color-white, #fff);
+  background: #333;
+  border-radius: 10px;
+  text-align: center;
+  min-width: 20px;
+}
+
+.itemName {
+  font-weight: 500;
+  font-size: clamp(0.9rem, 3vw, 1rem);
+  padding: 0;
+  margin: 0;
+  color: #333;
+}
+
+.navList .navItem.subItem {
+  padding-left: 2.5rem;
+  background-color: #f9f9f9;
+}
+
+.navList .navItem.subItem .itemName {
+  font-weight: 400;
+  font-size: 0.9rem;
 }
 
 @media (min-width: 821px) {
-  #search {
-    width: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    padding: 0;
-    margin: 0;
+  .navBarContainer {
+    height: 100px;
+    padding: 0rem 4rem;
+    justify-content: space-between;
   }
-  #search input {
+
+  .menuToggle {
+    display: none;
+  }
+
+  .searchContainer {
+    width: 40%;
+    max-width: 500px;
+    display: flex;
+    order: 2;
+  }
+  .searchInput {
     width: 100%;
     padding: 10px 20px;
     border-radius: 100px;
     border: 1px solid #000000;
-    outline: none;
     font-size: 1rem;
-    position: relative;
   }
-  #search input::placeholder {
+  .searchInput::placeholder {
     color: #00000075;
     font-size: 0.85rem;
     font-weight: 500;
     letter-spacing: 0.44px;
   }
-  #search div {
+  .searchButton {
     background: #000;
     height: 90%;
     width: 80px;
-    position: absolute;
     right: 3px;
-    bottom: 2px;
+    top: 50%;
+    transform: translateY(-50%);
     border-radius: 20px;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
   }
-  #search div:hover {
+  .searchButton:hover {
     background: #0000009c;
-    transition: all .3s;
   }
-  .navBarContainer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0rem 4rem;
-    background-color: #ffffff;
-    border-bottom: 1px solid #e0e0e0;
-    height: 100px;
+  .searchButton svg {
+    font-size: 1.5rem;
   }
-  .nav_list {
+
+  .navList {
     display: flex;
-    list-style: none;
-    align-items: center;
-    justify-content: space-between;
-    width: fit-content;
+    flex-direction: row;
+    position: static;
+    transform: none;
+    width: auto;
+    background-color: transparent;
+    border-top: none;
+    box-shadow: none;
     gap: 2rem;
+    order: 3;
+  }
+
+  .navItem {
+    width: auto;
+    padding: 0.5rem 0;
+    border-bottom: none;
+    height: 50px;
+  }
+  .navItem:hover {
+    text-decoration: underline;
+    background-color: transparent;
+    text-underline-offset: 4px;
+  }
+
+  .navTextContainer {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 0.25rem;
+    padding: 0.25rem 0;
+  }
+
+  .userText {
+    font-family: "Poppins", sans-serif;
+    font-size: 0.8rem;
+    margin-bottom: -5px;
+    color: #000000da;
+  }
+
+  .itemQuantity {
+    font-family: "Poppins", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: -5px;
+    color: #fff;
+    background: #000;
+    padding: 0.1rem 0.6rem;
+    border-radius: 1rem;
+  }
+
+  .itemName {
+    font-weight: 600;
+    font-size: clamp(0.9rem, 3vw, 0.9rem);
   }
 }

@@ -28,12 +28,18 @@
   display: flex;
   flex-direction: column;
   padding: 1rem;
-  gap: 1rem;
+  gap: 0.5rem;
+}
+.icon_button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .hover_icons button {
-  width: 40px;
-  height: 40px;
+  height: 30px;
   background: #fff;
+  padding: 0.3rem;
   border: none;
   border-radius: 100%;
   cursor: pointer;
@@ -41,7 +47,7 @@
 .hover_icons button:hover {
   background: var(--color-primary-gold);
   transition: all 0.3s ease;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 .card_image:hover {
   #image {
@@ -91,13 +97,13 @@
   font-style: normal;
   font-weight: 500;
   line-height: 24px;
-  transition: .3s;
+  transition: 0.3s;
 
   cursor: pointer;
 }
-#title:hover{
+#title:hover {
   text-decoration: underline;
-  transition: .3s;
+  transition: 0.3s;
   text-underline-offset: 4px;
 }
 #price {
@@ -110,4 +116,19 @@
   display: flex;
 
   align-items: center;
+}
+
+@media (min-width: 600px) {
+  .card_image > img {
+    width: 200px;
+    height: 240px;
+  }
+}
+
+@media (min-width: 821px) {
+  .card_image > img {
+    width: 280px;
+    width: 100%;
+    height: 320px;
+  }
 }

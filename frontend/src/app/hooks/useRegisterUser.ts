@@ -31,7 +31,7 @@ export const useRegisterUser = () => {
     clearErrors,
     reset,
   } = useForm<RegisterProps>({
-    mode: "onBlur", 
+    mode: "onBlur",
   });
 
   // Manejar errores del servidor
@@ -58,19 +58,24 @@ export const useRegisterUser = () => {
 
       if (registerUser.fulfilled.match(response)) {
         const userData = decodeToken(response.payload.token);
-        dispatch(setUserData({ token: response.payload.token, profile: userData }));
+        dispatch(
+          setUserData({ token: response.payload.token, profile: userData })
+        );
         reset(); // Limpia el formulario después de éxito
-        
+
         setTimeout(() => {
           dispatch(setModalLoading(false));
-          dispatch(setAlert({
-            type: "success",
-            message: `Welcome, ${userData.first_name}`,
-          }));
+          dispatch(
+            setAlert({
+              type: "success",
+              message: `Welcome, ${userData.first_name}`,
+            })
+          );
         }, 1300);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Registration failed";
+      const errorMessage =
+        error instanceof Error ? error.message : "Registration failed";
       dispatch(setModalLoading(false));
       dispatch(setModalAuth(true));
       setError("root.server", {

@@ -53,17 +53,17 @@ export default function CardProduct({
         <Image
           src={image}
           alt={title}
-          width={300}
-          height={340}
+          width={150}
+          height={200}
           itemProp="image"
           id={styles.image}
         />
         <figcaption className={styles.hover_icons}>
           <button aria-label="Add to favorites" className={styles.icon_button}>
-            <Image src={LikeIcon} alt="Like" width={28} />
+            <Image src={LikeIcon} alt="Like" width={20} />
           </button>
           <button aria-label="View details" className={styles.icon_button}>
-            <Image src={ViewIcon} alt="View detailsw" width={28} />
+            <Image src={ViewIcon} alt="View detailsw" width={20} />
           </button>
         </figcaption>
         <button

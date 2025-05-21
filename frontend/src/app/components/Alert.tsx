@@ -21,8 +21,8 @@ export default function AlertComponent({
         borderRadius: "8px",
         margin: "0 auto",
         maxWidth: "400px",
-        width: "40%",
-        padding: "1rem",
+        width: "fit-content",
+        padding: "1rem 2rem",
         fontWeight: 700,
         fontSize: "1rem",
       }}

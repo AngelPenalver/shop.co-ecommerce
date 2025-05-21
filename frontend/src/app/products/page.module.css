@@ -1,10 +1,29 @@
 .products_grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
   gap: 4rem;
   padding: 2rem 6rem;
   align-items: center;
   justify-content: center;
   transition: 0.5s;
   list-style: none;
+  grid-template-columns: repeat(2, 1fr);
 }
+
+@media (min-width: 600px) {
+  .products_grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 821px) {
+  .products_grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Si necesitas aún más columnas para pantallas muy grandes: */
+/* @media (min-width: 1200px) {
+  .products_grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+} */

@@ -53,7 +53,17 @@ export default function Home(): React.JSX.Element {
             Explore our exclusive collection of furniture designed to transform
             your spaces.
           </p>
-          <button aria-label="Browse our new collection">BUY NOW</button>
+          <Link
+            href={"/products"}
+            style={{ color: "#fff", textDecoration: "none" }}
+          >
+            <button
+              aria-label="Browse our new collection"
+              style={{ cursor: "pointer" }}
+            >
+              BUY NOW
+            </button>
+          </Link>
         </article>
       </header>
 

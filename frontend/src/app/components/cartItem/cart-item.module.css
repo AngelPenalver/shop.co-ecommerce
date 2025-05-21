@@ -1,13 +1,14 @@
 .container_cart_item {
   display: flex;
+  flex-direction: column;
   width: 100%;
   gap: 3rem;
   border: 1px solid rgba(0, 0, 0, 0.1);
   padding: 1rem 3rem;
 }
 .image_cart_item img {
-  width: 180px;
-  height: 150px;
+  width: 100%;
+  height: 200px;
   border-radius: 20px;
 }
 .content_cart_item {
@@ -57,7 +58,15 @@
   margin: 0;
 }
 #quantity {
-  position: absolute;
   right: 0;
   bottom: 0;
+}
+@media (min-width: 800px) {
+  .container_cart_item {
+    display: flex;
+    flex-direction: row;
+  }
+  .image_cart_item img {
+    width: 220px;
+  }
 }
