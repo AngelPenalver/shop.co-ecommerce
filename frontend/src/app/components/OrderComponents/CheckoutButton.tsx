@@ -1,3 +1,4 @@
+"use client";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { useEffect, useState, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "../../hook";
@@ -68,7 +69,7 @@ export default function CheckoutButton() {
       return;
     }
 
-    if (!defaultAddress) {
+    if (!defaultAddress && !currentAddress) {
       setCheckoutError("You must select a shipping address.");
       return;
     }
@@ -80,21 +81,31 @@ export default function CheckoutButton() {
 
     setCheckoutError(null);
     try {
+      const addressToUse = currentAddress || defaultAddress;
+      if (!addressToUse) {
+        setCheckoutError("Shipping address is missing."); // Doble chequeo por si acaso
+        return;
+      }
       await dispatch(
         createOrder({
           userId: profile.id,
-          addressId: currentAddress?.id ? currentAddress.id : defaultAddress.id,
+          addressId: addressToUse.id,
         })
       ).unwrap();
     } catch (err) {
       console.error("Error creating order:", err);
       const errorMessage =
-        typeof err === "string"
+        err &&
+        typeof err === "object" &&
+        "message" in err &&
+        typeof err.message === "string"
+          ? err.message
+          : typeof err === "string"
           ? err
           : "Could not create the order. Please try again.";
       setCheckoutError(errorMessage);
     }
-  }, [dispatch, profile, cart, defaultAddress, currentAddress?.id]);
+  }, [dispatch, profile, cart, defaultAddress, currentAddress]);
 
   const deliveryFee = 15.0;
   const subtotal = cart?.total ?? 0;
@@ -103,10 +114,13 @@ export default function CheckoutButton() {
   const totalAmount = subtotal + deliveryFee + ivaAmount;
 
   const isDisabled =
-    !profile || !defaultAddress || !cart?.items?.length || orderLoading; // Added !defaultAddress
+    !profile ||
+    (!defaultAddress && !currentAddress) ||
+    !cart?.items?.length ||
+    orderLoading;
 
   return (
-    <div style={{ margin: "0", padding: "0" }}>
+    <div style={{ margin: "0", padding: "0", width: "100%" }}>
       <aside aria-labelledby="summary-heading" className="order-summary">
         <h2 id="summary-heading">Order Summary</h2>
         <ul>
@@ -127,11 +141,9 @@ export default function CheckoutButton() {
           <span>Total</span>
           <span>${totalAmount.toFixed(2)}</span>
         </div>
-        {checkoutError && (
-          <p style={{ color: "red", textAlign: "center" }}>{checkoutError}</p>
-        )}
+        {checkoutError && <p className="error-message">{checkoutError}</p>}
         {orderError && (
-          <p style={{ color: "red", textAlign: "center" }}>
+          <p className="error-message">
             Order Error:{" "}
             {typeof orderError === "string" ? orderError : "An error occurred."}
           </p>
@@ -143,30 +155,34 @@ export default function CheckoutButton() {
           aria-live="polite"
           aria-disabled={isDisabled}
         >
-          {orderLoading ? "Processing..." : "Pay with Stripe"} {}
+          {orderLoading ? "Processing..." : "Pay with Stripe"}
         </button>
       </aside>
       <style jsx>{`
         .checkout-button {
           display: flex;
-          height: 60px;
-          padding: 16px 54px;
+          height: 50px;
+          padding: 0 30px;
           justify-content: center;
           align-items: center;
           gap: 12px;
-          flex-shrink: 0;
           align-self: stretch;
-          border-radius: 62px;
-          background: var(--color-primary-gold, #daa520); /* Fallback color */
+          border-radius: 30px;
+          background: var(--color-primary-gold, #b88e2f);
           color: #fff;
-          font-size: clamp(1rem, 3vw, 1.1rem);
+          font-size: clamp(0.9rem, 2.5vw, 1rem);
           font-style: normal;
-          font-weight: 500;
+          font-weight: 600;
           line-height: normal;
           border: none;
           cursor: pointer;
           transition: background-color 0.2s ease-in-out,
             opacity 0.2s ease-in-out;
+          text-transform: uppercase; /* Añadido */
+          letter-spacing: 0.5px; /* Añadido */
+          width: 100%; /* Que ocupe el ancho del contenedor */
+          box-sizing: border-box;
+          margin-top: 1rem; /* Espacio arriba del botón */
         }
         .checkout-button:disabled {
           background-color: #ccc;
@@ -174,22 +190,28 @@ export default function CheckoutButton() {
           opacity: 0.7;
         }
         .order-summary {
-          margin-top: 20px;
-          padding: 15px;
+          margin-top: 1.5rem;
+          padding: 1.5rem;
           border: 1px solid #eee;
           border-radius: 8px;
-          width: 400px;
+          width: 100%; /* Ocupa el 100% del .checkout_content */
+          max-width: 450px; /* Mantiene el max-width de móvil */
+          margin-left: auto;
+          margin-right: auto;
           display: flex;
           flex-direction: column;
           gap: 1rem;
-          text-align: center;
+          text-align: left; /* Alinea a la izquierda */
+          box-sizing: border-box;
         }
         .order-summary h2 {
           margin-top: 0;
-          font-size: 1.2rem;
+          font-size: 1.1rem;
           border-bottom: 1px solid #ddd;
-          padding-bottom: 10px;
-          margin-bottom: 10px;
+          padding-bottom: 0.75rem;
+          margin-bottom: 0.75rem;
+          font-weight: 600; /* Añadido */
+          text-align: center; /* Centrado */
         }
         .order-summary ul {
           list-style: none;
@@ -199,7 +221,8 @@ export default function CheckoutButton() {
         .order-summary li {
           display: flex;
           justify-content: space-between;
-          padding: 8px 0;
+          padding: 0.6rem 0;
+          font-size: 0.9rem;
         }
         .order-summary li:not(:last-child) {
           border-bottom: 1px dashed #eee;
@@ -208,10 +231,26 @@ export default function CheckoutButton() {
           display: flex;
           justify-content: space-between;
           font-weight: bold;
-          font-size: 1.1rem;
-          padding-top: 10px;
-          margin-top: 10px;
+          font-size: 1rem;
+          padding-top: 0.75rem;
+          margin-top: 0.75rem;
           border-top: 1px solid #ddd;
+        }
+        .error-message {
+          color: red;
+          text-align: center;
+          font-size: 0.85rem;
+          margin-top: 0.5rem;
+        }
+
+        @media (min-width: 768px) {
+          .order-summary {
+            margin-top: 0;
+            max-width: none;
+          }
+          .checkout-button {
+            height: 55px;
+          }
         }
       `}</style>
     </div>

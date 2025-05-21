@@ -1,39 +1,66 @@
 .createAddressForm {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  width: 70%;
-  align-items: center;
-  justify-content: center;
+  gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
+
 .formGroup {
   display: flex;
-  width: 80%;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  width: 100%;
+  flex-direction: column;
+  gap: 1.5rem;
 }
-.formGroup div {
+
+.formGroup > div {
   width: 100%;
 }
-.createAddressForm button {
-  color: #000;
+
+.createAddressForm button[type="submit"] {
+  color: #fff;
   cursor: pointer;
-  border: 1px solid #000;
-  background-color: transparent;
-  padding: 0.7rem 1.5rem;
-  border-radius: 62px;
-  flex-shrink: 0;
-  gap: 12px;
-  font-size: clamp(0.75rem, 3vw, 0.9rem);
+  border: 1px solid var(--color-primary-gold, #b88e2f);
+  background-color: var(--color-primary-gold, #b88e2f);
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
   font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
   line-height: normal;
   transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
+  margin-top: 1rem;
+  width: 100%;
+  max-width: 300px;
+  align-self: center;
 }
-.createAddressForm button:hover {
-  background-color: #000;
-  color: #fff;
-  opacity: 0.8;
+
+.createAddressForm button[type="submit"]:hover {
+  background-color: #a17d28;
+  border-color: #a17d28;
+}
+.createAddressForm button[type="submit"]:disabled {
+  background-color: #ccc;
+  border-color: #ccc;
+  cursor: not-allowed;
+}
+
+.errorText {
+  color: red;
+  font-size: 0.85rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .formGroup {
+    flex-direction: row;
+    gap: 1rem;
+  }
+  .createAddressForm button[type="submit"] {
+    width: auto;
+    align-self: flex-start;
+    padding: 0.8rem 2rem;
+  }
 }
