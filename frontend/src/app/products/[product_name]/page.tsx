@@ -27,7 +27,7 @@ export default function ProductDetail(): React.JSX.Element {
 
   const handleAddToCartClick = () => {
     if (profile) {
-      handleAddToCart(product.id, quantity, profile.id);
+      handleAddToCart(product.id, quantity);
     } else {
       // Handle the case when the user is not logged in
       dispatch(
