@@ -29,9 +29,7 @@ export const useAddToCart = () => {
       }, 1300);
       return;
     }
-    const result = await dispatch(
-      addProductToCart({ productId, quantity, userId })
-    );
+    const result = await dispatch(addProductToCart({ productId, quantity }));
     if (addProductToCart.fulfilled.match(result)) {
       setTimeout(() => {
         dispatch(
