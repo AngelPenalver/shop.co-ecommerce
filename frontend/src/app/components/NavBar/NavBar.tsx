@@ -69,8 +69,11 @@ export default function NavBar(): React.JSX.Element {
   const handleMouseLeaveAccountDesktop = useCallback(() => {
     if (!isMobileMenuOpen) {
       hoverTimeoutRef.current = setTimeout(() => {
-        setIsAccountDropdownOpen(false);
-      }, 300);
+        const modal = document.querySelector(`.${styles.modal}`);
+        if (!modal || !modal.matches(":hover")) {
+          setIsAccountDropdownOpen(false);
+        }
+      }, 250);
     }
   }, [isMobileMenuOpen]);
 

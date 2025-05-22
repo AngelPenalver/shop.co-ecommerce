@@ -27,6 +27,7 @@ export default function AccountModal({
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const modalRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isHoveringRef = useRef(false);
 
   const updatePosition = useCallback(() => {
     if (anchorElement) {
@@ -60,6 +61,7 @@ export default function AccountModal({
   }, []);
 
   const handleMouseEnter = () => {
+    isHoveringRef.current = true;
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -67,9 +69,42 @@ export default function AccountModal({
   };
 
   const handleMouseLeave = () => {
+    isHoveringRef.current = false;
     timeoutRef.current = setTimeout(() => {
-      onClose();
-    }, 300);
+      if (!isHoveringRef.current) {
+        onClose();
+      }
+    }, 200);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  const handleModalMouseEnter = (e: React.MouseEvent) => {
+    if (
+      e.relatedTarget &&
+      anchorElement &&
+      !anchorElement.contains(e.relatedTarget as Node)
+    ) {
+      return;
+    }
+    handleMouseEnter();
   };
 
   const handleModalRegister = () => {
@@ -77,6 +112,7 @@ export default function AccountModal({
     dispatch(setModalAuth(true));
     dispatch(setAuthView("register"));
   };
+
   const handleModalLogin = () => {
     onClose();
     dispatch(setModalAuth(true));
@@ -102,8 +138,9 @@ export default function AccountModal({
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
+        pointerEvents: isOpen ? "auto" : "none",
       }}
-      onMouseEnter={handleMouseEnter}
+      onMouseEnter={handleModalMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {token ? (
@@ -113,7 +150,6 @@ export default function AccountModal({
               {profile?.first_name} {profile?.last_name}
             </p>
           </div>
-
           <button
             onClick={handleLogout}
             className={`${styles.modalItem} ${styles.logout}`}
