@@ -6,7 +6,7 @@ import AccountIcon from "@/public/account_icon.svg";
 import AccountLogoutIcon from "@/public/account_logout.svg";
 import CartIcon from "@/public/cart_icon.svg";
 import Image, { StaticImageData } from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AccountModal from "../auth/AccountModal/AccountModal";
 import { Search } from "@mui/icons-material";
 import { useAppDispatch, useAppSelector } from "../../hook";
@@ -15,7 +15,10 @@ import {
   setAuthView,
   logoutUser,
 } from "../../lib/store/features/user/userSlice";
-import { setModalLoading } from "../../lib/store/features/products/productsSlice";
+import {
+  fetchAllProducts,
+  setModalLoading,
+} from "../../lib/store/features/products/productsSlice";
 import { clearCart } from "../../lib/store/features/cart/cartSlice";
 
 interface NavItemConfig {
@@ -31,6 +34,8 @@ interface NavItemConfig {
 
 export default function NavBar(): React.JSX.Element {
   const router = useRouter();
+  const pathname = usePathname();
+  const prevPathnameRef = useRef<string | null>(null);
   const { cart } = useAppSelector((state) => state.cartSlice);
   const { token, profile } = useAppSelector((state) => state.userSlice);
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
@@ -42,6 +47,7 @@ export default function NavBar(): React.JSX.Element {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileAccountSubMenuOpen, setIsMobileAccountSubMenuOpen] =
     useState(false);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -78,9 +84,10 @@ export default function NavBar(): React.JSX.Element {
   }, [isMobileMenuOpen]);
 
   const handleSearchNav = async () => {
-    if (isMobileMenuOpen) {
-      setIsMobileMenuOpen(false);
-      setIsMobileAccountSubMenuOpen(false);
+    if (pathname === "/products") {
+      await dispatch(fetchAllProducts({ search: searchTerm, limit: 16 }));
+    } else {
+      router.push("/products");
     }
   };
 
@@ -183,6 +190,25 @@ export default function NavBar(): React.JSX.Element {
       }
     }
   };
+
+  useEffect(() => {
+    const prevPath = prevPathnameRef.current;
+    const currentPath = pathname;
+
+    const isNavigatingWithinProducts =
+      prevPath?.startsWith("/products") &&
+      currentPath.startsWith("/products") &&
+      prevPath !== currentPath;
+
+    const hasExitedProductsSection =
+      prevPath?.startsWith("/products") && !currentPath.startsWith("/products");
+
+    if (isNavigatingWithinProducts || hasExitedProductsSection) {
+      setSearchTerm("");
+    }
+
+    prevPathnameRef.current = currentPath;
+  }, [pathname]);
 
   return (
     <nav className={styles.navBarContainer} aria-label="Main navigation">
